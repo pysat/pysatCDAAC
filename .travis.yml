@@ -43,7 +43,8 @@ install:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
   # set up data directory
   - mkdir /home/travis/build/pysatData
-  # install pysat
+  - cd ../pysatCDAAC
+  # install pysatCDAAC
   - python setup.py install
 
 # command to run tests
