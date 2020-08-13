@@ -37,5 +37,5 @@ The instrument modules are portable and designed to be run like any pysat instru
 import pysat
 from pysatCDAAC.instruments import cosmic_gps
 
-ivm = pysat.Instrument(inst_module=cosmic_gps)
+cosmic = pysat.Instrument(inst_module=cosmic_gps, tag='ionprf')
 ```
