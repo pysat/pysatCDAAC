@@ -38,12 +38,12 @@ import pysat
 from pysatCDAAC.instruments import cosmic_gps
 
 cosmic = pysat.Instrument(inst_module=cosmic_gps, tag='ionprf')
+```
+Another way to use the instruments in an external repository is to register the instruments.  This only needs to be done the first time you load an instrument.  Afterward, pysat will identify them using the `platform` and `name` keywords.
 
-Another way to use the instruments in an external repository is to register the instruments.  Then, pysat will identify them using the `platform` and `name` keywords.
-
-'''
+```
 import pysat
 
 pysat.utils.registry.register(‘pysatCDAAC.instruments.cosmic_gps’)
 cosmic = pysat.Instrument('cosmic', 'gps', tag='ionprf')
-'''
+```
