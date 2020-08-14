@@ -1,0 +1,13 @@
+include *.py
+include *.f
+include *.c
+recursive-include pysatCDAAC *.py
+include *.md
+include description.txt
+include LICENSE
+include pysatCDAAC/version.txt
+prune pysatCDAAC/tests
+prune docs
+prune demo
+exclude *.pdf
+exclude *.png
