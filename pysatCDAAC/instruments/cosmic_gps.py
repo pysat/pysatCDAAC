@@ -165,7 +165,7 @@ def list_files(tag=None, sat_id=None, data_path=None, format_str=None):
         # this ensures that we can make the times all unique for the file list
         idx = np.argsort(uts)
         # adding linearly increasing offsets less than 0.01 s
-        shift_uts = np.mod(np.arange(len(year)), 1E3) * 1.E-5 + 1.E-5
+        shift_uts = np.mod(np.arange(len(year)), 1E3) * 1.E-7 + 1.E-7
         uts[idx] += shift_uts
 
         index = pysat.utils.time.create_datetime_index(year=year,
