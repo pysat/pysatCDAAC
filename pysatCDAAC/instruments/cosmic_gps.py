@@ -21,7 +21,7 @@ name
 tag
     Select profile type, or scintillation, one of:
     {'ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1'}
-sat_id
+inst_id
     None supported
 altitude_bin
     Number of kilometers to bin altitude profiles by when loading.
@@ -72,7 +72,7 @@ tags = {'ionprf': '',
         'wetprf': '',
         'atmprf': '',
         'scnlv1': ''}
-sat_ids = {'': ['ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1']}
+inst_ids = {'': ['ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1']}
 _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'sonprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
@@ -104,7 +104,7 @@ def init(self):
     return
 
 
-def list_files(tag=None, sat_id=None, data_path=None, format_str=None):
+def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     """Return a Pandas Series of every file for chosen satellite data.
 
     Parameters
@@ -112,7 +112,7 @@ def list_files(tag=None, sat_id=None, data_path=None, format_str=None):
     tag : string or NoneType
         Denotes type of file to load.
         (default=None)
-    sat_id : string or NoneType
+    inst_id : string or NoneType
         Specifies the satellite ID for a constellation.  Not used.
         (default=None)
     data_path : string or NoneType
@@ -184,7 +184,7 @@ def list_files(tag=None, sat_id=None, data_path=None, format_str=None):
         return pds.Series(None, dtype='object')
 
 
-def load(fnames, tag=None, sat_id=None, altitude_bin=None):
+def load(fnames, tag=None, inst_id=None, altitude_bin=None):
     """Load COSMIC GPS files.
 
     Parameters
@@ -193,7 +193,7 @@ def load(fnames, tag=None, sat_id=None, altitude_bin=None):
         Series of filenames
     tag : str or NoneType
         tag or None (default=None)
-    sat_id : str or NoneType
+    inst_id : str or NoneType
         satellite id or None (default=None)
     altitude_bin : integer
         Number of kilometers to bin altitude profiles by when loading.
@@ -219,18 +219,18 @@ def load(fnames, tag=None, sat_id=None, altitude_bin=None):
     if num != 0:
         # call separate load_files routine, segmented for possible
         # multiprocessor load, not included and only benefits about 20%
-        output = pds.DataFrame(load_files(fnames, tag=tag, sat_id=sat_id,
+        output = pds.DataFrame(load_files(fnames, tag=tag, inst_id=inst_id,
                                           altitude_bin=altitude_bin))
         utsec = output.hour * 3600. + output.minute * 60. + output.second
         # FIXME: need to switch to xarray so unique time stamps not needed
         # make times unique by adding a unique amount of time less than a second
         if tag != 'scnlv1':
-            # add 1E-6 seconds to time based upon occulting_sat_id
+            # add 1E-6 seconds to time based upon occulting_inst_id
             # additional 1E-7 seconds added based upon cosmic ID
             # get cosmic satellite ID
             c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
             # time offset
-            utsec += output.occulting_sat_id*1.e-5 + c_id*1.e-6
+            utsec += output.occulting_inst_id*1.e-5 + c_id*1.e-6
         else:
             # construct time out of three different parameters
             # duration must be less than 10,000
@@ -295,7 +295,7 @@ def _process_lengths(lengths):
 # separate routine for doing actual loading. This was broken off from main load
 # because I was playing around with multiprocessor loading
 # yielded about 20% improvement in execution time
-def load_files(files, tag=None, sat_id=None, altitude_bin=None):
+def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     """Load COSMIC data files directly from a given list.
 
     May be directly called by user, but in general is called by load.  This is
@@ -308,7 +308,7 @@ def load_files(files, tag=None, sat_id=None, altitude_bin=None):
         Series of filenames
     tag : str or NoneType
         tag or None (default=None)
-    sat_id : str or NoneType
+    inst_id : str or NoneType
         satellite id or None (default=None)
     altitude_bin : integer
         Number of kilometers to bin altitude profiles by when loading.
@@ -451,7 +451,7 @@ def load_files(files, tag=None, sat_id=None, altitude_bin=None):
     return output
 
 
-def download(date_array, tag, sat_id, data_path=None,
+def download(date_array, tag, inst_id, data_path=None,
              user=None, password=None):
     """Download COSMIC GPS data.
 
