@@ -136,8 +136,8 @@ def clean(self):
             self.data = self.data[((self['edmaxalt'] != -999.)
                                    & (self['edmax'] != -999.))]
             # make sure edmaxalt in "reasonable" range
-            self.data = self.data[((self.data.edmaxalt >= 175.)
-                                   & (self.data.edmaxalt <= 475.))]
+            self.data = self.data[((self['edmaxalt'] >= 175.)
+                                   & (self['edmaxalt'] <= 475.))]
             # filter densities when negative
             for i, profile in enumerate(self['profiles']):
                 # take out all densities below the highest altitude negative
