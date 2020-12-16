@@ -340,13 +340,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 data = netCDF4.Dataset(fnames[ind])
                 ncattrsList = data.ncattrs()
                 for d in ncattrsList:
-                    meta[d] = {'units': '', 'long_name': d}
+                    meta[d] = {meta.labels.units: '',
+                               meta.labels.name: d}
                 keys = data.variables.keys()
                 for key in keys:
                     if 'units' in data.variables[key].ncattrs():
-                        profile_meta[key] = {'units': data.variables[key].units,
-                                             'long_name':
-                                             data.variables[key].long_name}
+                        profile_meta[key] = \
+                            {meta.labels.units: data.variables[key].units,
+                             meta.labels.name: data.variables[key].long_name}
                 repeat = False
             except RuntimeError:
                 # file was empty, try the next one by incrementing ind
