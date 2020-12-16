@@ -122,8 +122,8 @@ def clean(self):
         Instrument class object, whose attribute clean_level is used to return
         the desired level of data selectivity.
 
-    Notes
-    -----
+    Note
+    ----
     Supports 'clean', 'dusty', 'dirty'
 
     """
@@ -133,23 +133,23 @@ def clean(self):
             # try and make sure all data is good
             # filter out profiles where source provider processing doesn't
             # get max dens and max dens alt
-            self.data = self.data[((self['edmaxalt'] != -999.) &
-                                   (self['edmax'] != -999.))]
+            self.data = self.data[((self['edmaxalt'] != -999.)
+                                   & (self['edmax'] != -999.))]
             # make sure edmaxalt in "reasonable" range
-            self.data = self.data[(self.data.edmaxalt >= 175.) &
-                                  (self.data.edmaxalt <= 475.)]
+            self.data = self.data[((self.data.edmaxalt >= 175.)
+                                   & (self.data.edmaxalt <= 475.))]
             # filter densities when negative
             for i, profile in enumerate(self['profiles']):
                 # take out all densities below the highest altitude negative
                 # dens below 325
-                idx, = np.where((profile.ELEC_dens < 0) &
-                                (profile.index <= 325))
+                idx, = np.where((profile.ELEC_dens < 0)
+                                & (profile.index <= 325))
                 if len(idx) > 0:
                     profile.iloc[0:idx[-1]+1] = np.nan
                 # take out all densities above the lowest altitude negative
                 # dens above 325
-                idx, = np.where((profile.ELEC_dens < 0) &
-                                (profile.index > 325))
+                idx, = np.where((profile.ELEC_dens < 0)
+                                & (profile.index > 325))
                 if len(idx) > 0:
                     profile.iloc[idx[0]:] = np.nan
 
@@ -174,8 +174,8 @@ def clean(self):
             # try and make sure all data is good
             # filter out profiles where source provider processing doesn't
             # work
-            self.data = self.data[((self['alttp_s4max'] != -999.) &
-                                   (self['s4max9sec'] != -999.))]
+            self.data = self.data[((self['alttp_s4max'] != -999.)
+                                   & (self['s4max9sec'] != -999.))]
 
     return
 
@@ -202,9 +202,9 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     format_str : NoneType
         User specified file format not supported here. (default=None)
 
-    Returns
-    -------
-    pysat.Files.from_os : pysat._files.Files
+    Return
+    ------
+    file_list : pysat.Files
         A class containing the verified available files
 
     """
@@ -345,9 +345,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 keys = data.variables.keys()
                 for key in keys:
                     if 'units' in data.variables[key].ncattrs():
-                        profile_meta[key] = \
-                            {meta.labels.units: data.variables[key].units,
-                             meta.labels.name: data.variables[key].long_name}
+                        profile_meta[key] = {
+                            meta.labels.units: data.variables[key].units,
+                            meta.labels.name: data.variables[key].long_name}
                 repeat = False
             except RuntimeError:
                 # file was empty, try the next one by incrementing ind
