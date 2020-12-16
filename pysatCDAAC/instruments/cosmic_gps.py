@@ -487,8 +487,6 @@ def download(date_array, tag, inst_id, data_path=None,
         # Try re-processed data (preferred)
         auth = requests.auth.HTTPBasicAuth(user, password)
         try:
-            # TODO: Update downloads to this new address
-            #'https://data.cosmic.ucar.edu/gnss-ro/cosmic1/repro2013/level2/2008/001/'
             dwnld = ''.join(("https://cdaac-www.cosmic.ucar.edu/cdaac/rest/",
                              "tarservice/data/cosmic2013/"))
             dwnld = dwnld + sub_dir + '/{year:04d}.{doy:03d}'.format(year=yr,
