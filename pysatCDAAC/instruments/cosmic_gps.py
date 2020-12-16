@@ -166,7 +166,7 @@ def clean(self):
                     profile['ELEC_dens'] *= np.nan
 
         # filter out any measurements where things have been set to NaN
-        self.data = self.data[self.data.edmaxalt.notnull()]
+        self.data = self.data[self['edmaxalt'].notnull()]
 
     elif self.tag == 'scnlv1':
         # scintillation files
