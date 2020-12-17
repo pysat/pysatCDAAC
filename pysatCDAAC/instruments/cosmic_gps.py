@@ -50,7 +50,6 @@ Warnings
 """
 
 import datetime as dt
-import logging
 import os
 import requests
 import shutil
@@ -61,9 +60,12 @@ import numpy as np
 import netCDF4
 import pandas as pds
 import pysat
+from pysat import logger
 from pysat.utils import files as futils
 
-logger = logging.getLogger(__name__)
+
+# ----------------------------------------------------------------------------
+# Instrument attributes
 
 platform = 'cosmic'
 name = 'gps'
@@ -73,6 +75,10 @@ tags = {'ionprf': '',
         'atmprf': '',
         'scnlv1': ''}
 inst_ids = {'': ['ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1']}
+
+# ----------------------------------------------------------------------------
+# Instrument test attributes
+
 _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'sonprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
@@ -81,6 +87,9 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
 _test_download = {'': {kk: False for kk in tags.keys()}}
 _password_req = {'': {kk: True for kk in tags.keys()}}
 
+
+# ----------------------------------------------------------------------------
+# Instrument methods
 
 def init(self):
     """Initializes the Instrument object with instrument specific values.
@@ -104,6 +113,78 @@ def init(self):
     return
 
 
+def clean(self):
+    """Return COSMIC GPS data cleaned to the specified level.
+
+    Parameters
+    ----------
+    self : pysat.Instrument
+        Instrument class object, whose attribute clean_level is used to return
+        the desired level of data selectivity.
+
+    Note
+    ----
+    Supports 'clean', 'dusty', 'dirty'
+
+    """
+    if self.tag == 'ionprf':
+        # ionosphere density profiles
+        if self.clean_level == 'clean':
+            # try and make sure all data is good
+            # filter out profiles where source provider processing doesn't
+            # get max dens and max dens alt
+            self.data = self.data[((self['edmaxalt'] != -999.)
+                                   & (self['edmax'] != -999.))]
+            # make sure edmaxalt in "reasonable" range
+            self.data = self.data[((self['edmaxalt'] >= 175.)
+                                   & (self['edmaxalt'] <= 475.))]
+            # filter densities when negative
+            for i, profile in enumerate(self['profiles']):
+                # take out all densities below the highest altitude negative
+                # dens below 325
+                idx, = np.where((profile.ELEC_dens < 0)
+                                & (profile.index <= 325))
+                if len(idx) > 0:
+                    profile.iloc[0:idx[-1]+1] = np.nan
+                # take out all densities above the lowest altitude negative
+                # dens above 325
+                idx, = np.where((profile.ELEC_dens < 0)
+                                & (profile.index > 325))
+                if len(idx) > 0:
+                    profile.iloc[idx[0]:] = np.nan
+
+                # do an altitude density gradient check to reduce number of
+                # cycle slips
+                densDiff = profile.ELEC_dens.diff()
+                altDiff = profile.MSL_alt.diff()
+                normGrad = (densDiff / (altDiff * profile.ELEC_dens)).abs()
+                idx, = np.where((normGrad > 1.) & normGrad.notnull())
+                if len(idx) > 0:
+                    self[i, 'edmaxalt'] = np.nan
+                    self[i, 'edmax'] = np.nan
+                    self[i, 'edmaxlat'] = np.nan
+                    profile['ELEC_dens'] *= np.nan
+
+        # filter out any measurements where things have been set to NaN
+        self.data = self.data[self['edmaxalt'].notnull()]
+
+    elif self.tag == 'scnlv1':
+        # scintillation files
+        if self.clean_level == 'clean':
+            # try and make sure all data is good
+            # filter out profiles where source provider processing doesn't
+            # work
+            self.data = self.data[((self['alttp_s4max'] != -999.)
+                                   & (self['s4max9sec'] != -999.))]
+
+    return
+
+
+# ----------------------------------------------------------------------------
+# Instrument functions
+#
+
+# Set the list_files routine
 def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     """Return a Pandas Series of every file for chosen satellite data.
 
@@ -121,9 +202,9 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     format_str : NoneType
         User specified file format not supported here. (default=None)
 
-    Returns
-    -------
-    pysat.Files.from_os : pysat._files.Files
+    Return
+    ------
+    file_list : pysat.Files
         A class containing the verified available files
 
     """
@@ -259,13 +340,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 data = netCDF4.Dataset(fnames[ind])
                 ncattrsList = data.ncattrs()
                 for d in ncattrsList:
-                    meta[d] = {'units': '', 'long_name': d}
+                    meta[d] = {meta.labels.units: '',
+                               meta.labels.name: d}
                 keys = data.variables.keys()
                 for key in keys:
                     if 'units' in data.variables[key].ncattrs():
-                        profile_meta[key] = {'units': data.variables[key].units,
-                                             'long_name':
-                                             data.variables[key].long_name}
+                        profile_meta[key] = {
+                            meta.labels.units: data.variables[key].units,
+                            meta.labels.name: data.variables[key].long_name}
                 repeat = False
             except RuntimeError:
                 # file was empty, try the next one by incrementing ind
@@ -533,72 +615,5 @@ def download(date_array, tag, inst_id, data_path=None,
             pass
         # tar file must be removed (even if download fails)
         os.remove(fname)
-
-    return
-
-
-def clean(inst):
-    """Return COSMIC GPS data cleaned to the specified level.
-
-    Parameters
-    ----------
-    inst : pysat.Instrument
-        Instrument class object, whose attribute clean_level is used to return
-        the desired level of data selectivity.
-
-    Notes
-    -----
-    Supports 'clean', 'dusty', 'dirty'
-
-    """
-    if inst.tag == 'ionprf':
-        # ionosphere density profiles
-        if inst.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # get max dens and max dens alt
-            inst.data = inst.data[((inst['edmaxalt'] != -999.) &
-                                   (inst['edmax'] != -999.))]
-            # make sure edmaxalt in "reasonable" range
-            inst.data = inst.data[(inst.data.edmaxalt >= 175.) &
-                                  (inst.data.edmaxalt <= 475.)]
-            # filter densities when negative
-            for i, profile in enumerate(inst['profiles']):
-                # take out all densities below the highest altitude negative
-                # dens below 325
-                idx, = np.where((profile.ELEC_dens < 0) &
-                                (profile.index <= 325))
-                if len(idx) > 0:
-                    profile.iloc[0:idx[-1]+1] = np.nan
-                # take out all densities above the lowest altitude negative
-                # dens above 325
-                idx, = np.where((profile.ELEC_dens < 0) &
-                                (profile.index > 325))
-                if len(idx) > 0:
-                    profile.iloc[idx[0]:] = np.nan
-
-                # do an altitude density gradient check to reduce number of
-                # cycle slips
-                densDiff = profile.ELEC_dens.diff()
-                altDiff = profile.MSL_alt.diff()
-                normGrad = (densDiff / (altDiff * profile.ELEC_dens)).abs()
-                idx, = np.where((normGrad > 1.) & normGrad.notnull())
-                if len(idx) > 0:
-                    inst[i, 'edmaxalt'] = np.nan
-                    inst[i, 'edmax'] = np.nan
-                    inst[i, 'edmaxlat'] = np.nan
-                    profile['ELEC_dens'] *= np.nan
-
-        # filter out any measurements where things have been set to NaN
-        inst.data = inst.data[inst.data.edmaxalt.notnull()]
-
-    elif inst.tag == 'scnlv1':
-        # scintillation files
-        if inst.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # work
-            inst.data = inst.data[((inst['alttp_s4max'] != -999.) &
-                                   (inst['s4max9sec'] != -999.))]
 
     return
