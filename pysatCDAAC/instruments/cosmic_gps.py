@@ -245,8 +245,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         # due to multiple spacecraft and antennas
         # this ensures that we can make the times all unique for the file list
         idx = np.argsort(uts)
-        # adding linearly increasing offsets less than 0.01 s
-        shift_uts = np.mod(np.arange(len(year)), 1E4) * 1.E-6 + 1.E-6
+        # adding linearly increasing offsets less than 0.1 s
+        shift_uts = np.mod(np.arange(len(year)), 9E4) * 1.E-5 + 1.E-5
         uts[idx] += shift_uts
 
         index = pysat.utils.time.create_datetime_index(year=year,
@@ -311,7 +311,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # get cosmic satellite ID
             c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
             # time offset
-            utsec += output.occulting_inst_id*1.e-5 + c_id*1.e-6
+            utsec += output.occulting_sat_id*1.e-5 + c_id*1.e-6
         else:
             # construct time out of three different parameters
             # duration must be less than 10,000
