@@ -1,24 +1,19 @@
 import tempfile
-
 import pytest
 
-import pysat
-# Make sure to import your instrument library here
-import pysatCDAAC
 # Import the test classes from pysat
+import pysat
 from pysat.utils import generate_instrument_list
 from pysat.tests.instrument_test_class import InstTestClass
 
+# Make sure to import your instrument library here
+import pysatCDAAC
 
-# Developers for instrument libraries should update the following line to
-# point to their own library package
-# e.g.,
-# instruments = generate_instrument_list(inst_loc=mypackage.instruments)
+# Retrieve the lists of CDAAC instruments and testing methods
 instruments = generate_instrument_list(inst_loc=pysatCDAAC.instruments)
-
-# The following lines apply the custom instrument lists to each type of test
 method_list = [func for func in dir(InstTestClass)
                if callable(getattr(InstTestClass, func))]
+
 # Search tests for iteration via pytestmark, update instrument list
 for method in method_list:
     if hasattr(getattr(InstTestClass, method), 'pytestmark'):
@@ -46,21 +41,14 @@ class TestInstruments(InstTestClass):
         # Make sure to use a temporary directory so that the user's setup is not
         # altered
         self.tempdir = tempfile.TemporaryDirectory()
-        self.saved_path = pysat.data_dir
-        pysat.utils.set_data_dir(self.tempdir.name, store=False)
-        # Developers for instrument libraries should update the following line
-        # to point to their own subpackage location, e.g.,
-        # self.inst_loc = mypackage.instruments
+        self.saved_path = pysat.params['data_dirs']
+        pysat.params.data['data_dirs'] = [self.tempdir.name]
+
+        # Assign the location of the Instrument sub-modules
         self.inst_loc = pysatCDAAC.instruments
 
     def teardown_class(self):
         """Runs after every method to clean up previous testing."""
-        pysat.utils.set_data_dir(self.saved_path, store=False)
+        pysat.params.data['data_dirs'] = self.saved_path
         self.tempdir.cleanup()
         del self.inst_loc, self.saved_path, self.tempdir
-
-    def setup_method(self):
-        """Runs before every method to create a clean testing setup."""
-
-    def teardown_method(self):
-        """Runs after every method to clean up previous testing."""
