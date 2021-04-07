@@ -84,8 +84,8 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
                     'scnlv1': dt.datetime(2008, 1, 1)}}
-_test_download = {'': {kk: False for kk in tags.keys()}}
-_password_req = {'': {kk: True for kk in tags.keys()}}
+_test_download = {'': {kk: True for kk in tags.keys()}}
+_password_req = {'': {kk: False for kk in tags.keys()}}
 
 
 # ----------------------------------------------------------------------------
@@ -221,7 +221,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # overloading revision keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*.*/*.{year:04d}.{day:03d}',
+        format_str = ''.join(('*/*/*.{year:04d}.{day:03d}',
                               '.{hour:02d}.{minute:02d}.*_nc'))
     # process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
@@ -539,9 +539,28 @@ def download(date_array, tag, inst_id, data_path=None,
 
     Parameters
     ----------
-    inst : pysat.Instrument
-        Instrument class object, whose attribute clean_level is used to return
-        the desired level of data selectivity.
+    date_array : array-like
+        list of datetimes to download data for. The sequence of dates need not
+        be contiguous.
+    tag : string
+        Tag identifier used for particular dataset. This input is provided by
+        pysat. (default='')
+    inst_id : string
+        Instrument ID string identifier used for particular dataset. This input
+        is provided by pysat. (default='')
+    data_path : string
+        Path to directory to download data to. (default=None)
+    user : string or NoneType
+        User string input used for download. Provided by user and passed via
+        pysat. If an account is required for downloads this routine here must
+        error if user not supplied. (default=None)
+    password : string or NoneType
+        Password for data download. (default=None)
+
+    Note
+    ----
+    This routine is invoked by pysat and is not intended for direct use by
+    the end user.
 
     """
 
@@ -558,60 +577,58 @@ def download(date_array, tag, inst_id, data_path=None,
     else:
         raise ValueError('Unknown cosmic_gps tag')
 
-    if (user is None) or (password is None):
-        raise ValueError('CDAAC user account information must be provided.')
-
     for date in date_array:
         logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
-        sys.stdout.flush()
         yr, doy = pysat.utils.time.getyrdoy(date)
-        yrdoystr = '{year:04d}.{doy:03d}'.format(year=yr, doy=doy)
+        yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
+
         # Try re-processed data (preferred)
         auth = requests.auth.HTTPBasicAuth(user, password)
         try:
-            dwnld = ''.join(("https://cdaac-www.cosmic.ucar.edu/cdaac/rest/",
-                             "tarservice/data/cosmic2013/"))
-            dwnld = dwnld + sub_dir + '/{year:04d}.{doy:03d}'.format(year=yr,
-                                                                     doy=doy)
-            top_dir = os.path.join(data_path, 'cosmic2013')
+            # Construct path string for online file
+            dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
+                             "/repro2013/level2/", yrdoystr, "/", sub_dir,
+                             '_repro2013',
+                             '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
+                                                                   doy=doy)))
+
+            # Make online connection
             req = requests.get(dwnld, auth=auth)
             req.raise_for_status()
         except requests.exceptions.HTTPError:
-            # if response is negative, try post-processed data
+            # If response is negative, try post-processed data
             try:
-                dwnld = ''.join(("https://cdaac-www.cosmic.ucar.edu/cdaac/",
-                                 "rest/tarservice/data/cosmic/"))
-                dwnld = dwnld + sub_dir + '/{year:04d}.{doy:03d}'
+                # Construct path string for online file
+                dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
+                                 "/postProc/level2/", yrdoystr, "/", sub_dir,
+                                 '_postProc',
+                                 '_{year:04d}_{doy:03d}.tar.gz'))
                 dwnld = dwnld.format(year=yr, doy=doy)
-                top_dir = os.path.join(data_path, 'cosmic')
+
+                # Make online connection
                 req = requests.get(dwnld, auth=auth)
                 req.raise_for_status()
             except requests.exceptions.HTTPError as err:
                 estr = ''.join((str(err), '\n', 'Data not found'))
                 logger.info(estr)
-        # Copy request info to tarball
-        # If data does not exist, will copy info not readable as tar
+
+        # Copy request info to tarball file with generated name in `fname`.
         fname = os.path.join(data_path,
-                             'cosmic_' + sub_dir + '_' + yrdoystr + '.tar')
+                             ''.join(('cosmic_', sub_dir,
+                                      '_{year:04d}.{doy:03d}.tar')))
+        fname = fname.format(year=yr, doy=doy)
         with open(fname, "wb") as local_file:
             local_file.write(req.content)
             local_file.close()
         try:
-            # uncompress files and remove tarball
+            # Uncompress files and remove tarball
             tar = tarfile.open(fname)
-            tar.extractall(path=data_path)
+            tar.extractall(path=os.path.join(data_path, yrdoystr))
             tar.close()
-            # move files
-            source_dir = os.path.join(top_dir, sub_dir, yrdoystr)
-            destination_dir = os.path.join(data_path, yrdoystr)
-            if os.path.exists(destination_dir):
-                shutil.rmtree(destination_dir)
-            shutil.move(source_dir, destination_dir)
-            # Get rid of empty directories from tar process
-            shutil.rmtree(top_dir)
+
         except tarfile.ReadError:
-            # If file cannot be read as a tarfile, then data does not exist
-            # skip this day since no data to move
+            # If file cannot be read as a tarfile, then data does not exist.
+            # Skip this day since there is nothing left to do.
             pass
         # tar file must be removed (even if download fails)
         os.remove(fname)
