@@ -233,13 +233,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
     # We have a list of files, now we need to extract the information
     # from the areas identified by format_str.
-    # TODO: Move to dcostring of function (?)
-    #  Note that function
-    # parses files names starting from the end, towards the beginning.
-    # When processing a fixed width filename, '?' must be used at the end so
-    # the function can determine the width, but '*' may be used at the beginning
-    # where information doesn't need to be parsed.
-    stored = futils.parse_fixed_width_filenames(files, format_str) #, delimiter='.')
+    stored = futils.parse_fixed_width_filenames(files, format_str)
 
     # Process info
     if len(stored['year']) > 0:
@@ -250,8 +244,6 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         ver = np.array(stored['version'])
 
         # Satellite ID pulled out as revision
-        # TODO: Add support for inst_id and tag as keywords to pysat files
-        #  functions (?)
         rev = np.array(stored['revision'])
 
         # Ground Station pulled out as 'cycle'
