@@ -211,7 +211,6 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
     estr = 'Building a list of COSMIC files, which can possibly take time. '
     logger.info('{:s}~1s per 100K files'.format(estr))
-    sys.stdout.flush()
 
     # Note that Files.from_os() could be used here except for the fact
     # that there are multiple COSMIC files per given time
@@ -221,41 +220,77 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # overloading revision keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*/*/*.{year:04d}.{day:03d}',
-                              '.{hour:02d}.{minute:02d}.*_{version:04d}.*_nc'))
-    # process format string to get string to search for
+        format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
+                              '{day:03d}.{hour:02d}.{minute:02d}.G{cycle:02d}_',
+                              '{version:04d}.????_nc'))
+
+    # Process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
     search_str = search_dict['search_string']
-    # perform local file search
+
+    # Perform local file search
     files = futils.search_local_system_formatted_filename(data_path, search_str)
-    # we have a list of files, now we need to extract the information
-    # pull of data from the areas identified by format_str
-    stored = futils.parse_delimited_filenames(files, format_str, delimiter='.')
+
+    # We have a list of files, now we need to extract the information
+    # from the areas identified by format_str.
+    # TODO: Move to dcostring of function (?)
+    #  Note that function
+    # parses files names starting from the end, towards the beginning.
+    # When processing a fixed width filename, '?' must be used at the end so
+    # the function can determine the width, but '*' may be used at the beginning
+    # where information doesn't need to be parsed.
+    stored = futils.parse_fixed_width_filenames(files, format_str) #, delimiter='.')
+
+    # Process info
     if len(stored['year']) > 0:
+        print('starting')
         year = np.array(stored['year'])
         day = np.array(stored['day'])
         hour = np.array(stored['hour'])
         minute = np.array(stored['minute'])
+        ver = np.array(stored['version'])
+
+        # Satellite ID pulled out as revision
+        # TODO: Add support for inst_id and tag as keywords to pysat files functions (?)
+        rev = np.array(stored['revision'])
+
+        # Ground Station pulled out as 'cycle'
+        gs = np.array(stored['cycle'])
+
+        # Create UTS time. Done with caution in case parsing above
+        # wasn't correct for some reason.
         try:
             uts = hour*3600.0 + minute*60.0
         except TypeError as err:
             raise TypeError(' '.join(('unable to construct time from',
                                       'filename\n{:}'.format(str(err)))))
-        # do a pre-sort on uts to get files that may conflict with each other
-        # due to multiple spacecraft and antennas
-        # this ensures that we can make the times all unique for the file list
-        idx = np.argsort(uts)
-        # adding linearly increasing offsets less than 0.1 s
-        shift_uts = np.mod(np.arange(len(year)), 9E4) * 1.E-5 + 1.E-5
-        uts[idx] += shift_uts
+
+        # Add shift in time based upon ground station and satellite ID
+        # to ensure files named by the minute are unique.
+        uts += rev * 0.1 + gs * 0.001
 
         index = pysat.utils.time.create_datetime_index(year=year,
                                                        day=day,
                                                        uts=uts)
         if not index.is_unique:
-            raise ValueError(' '.join(('Generated non-unique datetimes for',
-                                       'COSMIC within list_files.')))
-        # store sorted file names with unique times in index
+            # Look for duplicate times but different versions
+            dups = index[index.duplicated()].unique()
+            if len(dups) > 0:
+                # Keep the highest version for duplicated times
+                version = pds.Series(ver, index=index)
+                frame = pds.DataFrame({'files': files, 'revive': version,
+                                       'time': index}, index=index)
+                frame = frame.sort_values(by=['time', 'revive'],
+                                          ascending=[True, False])
+                frame = frame.drop_duplicates(subset='time', keep='first')
+                stored['files'] = frame['files'].values
+                index = frame.index
+
+            if not index.is_unique:
+                raise ValueError(' '.join(('Generated non-unique datetimes for',
+                                           'COSMIC within list_files.')))
+
+        # Store file names with unique times in index
         file_list = np.array(stored['files'])
         file_list = pds.Series(file_list, index=index)
         return file_list
