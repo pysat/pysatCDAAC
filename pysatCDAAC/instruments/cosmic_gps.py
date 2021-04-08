@@ -213,11 +213,12 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     logger.info('{:s}~1s per 100K files'.format(estr))
 
     # Note that Files.from_os() could be used here except for the fact
-    # that there are multiple COSMIC files per given time
-    # here, we follow from_os() except a fictional microsecond
-    # is added to file times to help ensure there are no file collisions
+    # that there are multiple COSMIC files per given time.
+    # Instead, we follow from_os() except a fictional amount of time
+    # is added to file times based upon the satellite and ground station
+    # numbers to ensure there are no file collisions.
 
-    # overloading revision keyword below
+    # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
         format_str = ''.join(('*/*_C{revision:03d}.{year:04d}.',
