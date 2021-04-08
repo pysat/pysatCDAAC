@@ -222,7 +222,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     if format_str is None:
         # COSMIC file format string
         format_str = ''.join(('*/*/*.{year:04d}.{day:03d}',
-                              '.{hour:02d}.{minute:02d}.*_nc'))
+                              '.{hour:02d}.{minute:02d}.*_{version:04d}.*_nc'))
     # process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
     search_str = search_dict['search_string']
