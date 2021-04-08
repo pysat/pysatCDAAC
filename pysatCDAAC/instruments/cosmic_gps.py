@@ -251,7 +251,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         ver = np.array(stored['version'])
 
         # Satellite ID pulled out as revision
-        # TODO: Add support for inst_id and tag as keywords to pysat files functions (?)
+        # TODO: Add support for inst_id and tag as keywords to pysat files
+        #  functions (?)
         rev = np.array(stored['revision'])
 
         # Ground Station pulled out as 'cycle'
