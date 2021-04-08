@@ -220,7 +220,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # overloading revision keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
+        format_str = ''.join(('*/*_C{revision:03d}.{year:04d}.',
                               '{day:03d}.{hour:02d}.{minute:02d}.G{cycle:02d}_',
                               '{version:04d}.????_nc'))
 
@@ -267,7 +267,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
         # Add shift in time based upon ground station and satellite ID
         # to ensure files named by the minute are unique.
-        uts += rev * 0.1 + gs * 0.001
+        uts += rev * 0.01 + gs * 0.0001
 
         index = pysat.utils.time.create_datetime_index(year=year,
                                                        day=day,
