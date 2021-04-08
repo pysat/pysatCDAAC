@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - `cosmic_gps` now supports downloads from new public data location
 - Update `cosmic_gps` data directory structure
 - Updated parsing of `cosmic_gps` filenames to ensure only the latest
-version on disk is retained.
+  version on disk is retained.
 
 ## [0.0.1] - 2020-08-13
 - initial port of existing routines from pysat
