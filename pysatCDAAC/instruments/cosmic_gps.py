@@ -243,7 +243,6 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
     # Process info
     if len(stored['year']) > 0:
-        print('starting')
         year = np.array(stored['year'])
         day = np.array(stored['day'])
         hour = np.array(stored['hour'])
