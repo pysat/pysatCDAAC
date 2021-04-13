@@ -62,6 +62,7 @@ import pandas as pds
 import pysat
 from pysat import logger
 from pysat.utils import files as futils
+import xarray as xr
 
 
 # ----------------------------------------------------------------------------
@@ -75,6 +76,8 @@ tags = {'ionprf': '',
         'atmprf': '',
         'scnlv1': ''}
 inst_ids = {'': ['ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1']}
+
+pandas_format = False
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
@@ -128,54 +131,53 @@ def clean(self):
 
     """
     if self.tag == 'ionprf':
-        # ionosphere density profiles
+        # Ionosphere density profiles
         if self.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # get max dens and max dens alt
-            self.data = self.data[((self['edmaxalt'] != -999.)
-                                   & (self['edmax'] != -999.))]
-            # make sure edmaxalt in "reasonable" range
-            self.data = self.data[((self['edmaxalt'] >= 175.)
-                                   & (self['edmaxalt'] <= 475.))]
-            # filter densities when negative
-            for i, profile in enumerate(self['profiles']):
-                # take out all densities below the highest altitude negative
-                # dens below 325
-                idx, = np.where((profile.ELEC_dens < 0)
-                                & (profile.index <= 325))
-                if len(idx) > 0:
-                    profile.iloc[0:idx[-1]+1] = np.nan
-                # take out all densities above the lowest altitude negative
-                # dens above 325
-                idx, = np.where((profile.ELEC_dens < 0)
-                                & (profile.index > 325))
-                if len(idx) > 0:
-                    profile.iloc[idx[0]:] = np.nan
+            # Filter out profiles where source provider processing doesn't work.
+            self.data = self.data.where(self['edmaxalt'] != -999., drop=True)
+            self.data = self.data.where(self['edmax'] != -999., drop=True)
 
-                # do an altitude density gradient check to reduce number of
-                # cycle slips
-                densDiff = profile.ELEC_dens.diff()
-                altDiff = profile.MSL_alt.diff()
-                normGrad = (densDiff / (altDiff * profile.ELEC_dens)).abs()
-                idx, = np.where((normGrad > 1.) & normGrad.notnull())
-                if len(idx) > 0:
-                    self[i, 'edmaxalt'] = np.nan
-                    self[i, 'edmax'] = np.nan
-                    self[i, 'edmaxlat'] = np.nan
-                    profile['ELEC_dens'] *= np.nan
+            # Ensure 'edmaxalt' in "reasonable" range
+            self.data = self.data.where(((self['edmaxalt'] >= 175.)
+                                        & (self['edmaxalt'] <= 475.)),
+                                        drop=True)
 
-        # filter out any measurements where things have been set to NaN
-        self.data = self.data[self['edmaxalt'].notnull()]
+            # Filter densities when negative
+            dens_copy = self['ELEC_dens'].values
+            for i, profile in enumerate(self['time']):
+                # Take out all densities below any altitude (< 325) with
+                # a negative density.
+                idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
+                                & (self[i, :, 'MSL_alt'] <= 325))
+                if len(idx) > 0:
+                    dens_copy[i, 0:idx[-1] + 1] = np.nan
+
+                # Take out all densities above any altitude > 325 with a
+                # negative density.
+                idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
+                                & (self[i, :, 'MSL_alt'] > 325))
+                if len(idx) > 0:
+                    dens_copy[i, idx[0]:] = np.nan
+            self[:, :, 'ELEC_dens'] = dens_copy
+
+            # Do an altitude density gradient check to reduce number of
+            # cycle slips.
+            densDiff = self['ELEC_dens'].diff(dim='RO')
+            altDiff = self['MSL_alt'].diff(dim='RO')
+            normGrad = (densDiff / (altDiff * self[:, :-1, 'ELEC_dens']))
+
+            # Calculate maximum gradient per profile
+            normGrad = normGrad.max(dim='RO')
+
+            # Remove profiles with high altitude gradients
+            self.data = self.data.where(normGrad <= 1.)
 
     elif self.tag == 'scnlv1':
         # scintillation files
         if self.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # work
-            self.data = self.data[((self['alttp_s4max'] != -999.)
-                                   & (self['s4max9sec'] != -999.))]
+            # Filter out profiles where source provider processing doesn't work.
+            self.data = self.data.where(self['alttp_s4max'] != -999., drop=True)
+            self.data = self.data.where(self['s4max9sec'] != -999., drop=True)
 
     return
 
@@ -289,7 +291,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
     """
 
-    # input check
+    # Input check
     if altitude_bin is not None:
         if tag != 'ionprf':
             estr = 'altitude_bin keyword only supported for "tag=ionprf"'
@@ -298,40 +300,31 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
     num = len(fnames)
     # make sure there are files to read
     if num != 0:
-        # call separate load_files routine, segmented for possible
-        # multiprocessor load, not included and only benefits about 20%
-        output = pds.DataFrame(load_files(fnames, tag=tag, inst_id=inst_id,
-                                          altitude_bin=altitude_bin))
+        # Call generalized load_files routine
+        output = load_files(fnames, tag=tag, inst_id=inst_id)
+
+        # Create datetime index
         utsec = output.hour * 3600. + output.minute * 60. + output.second
-        # FIXME: need to switch to xarray so unique time stamps not needed
-        # make times unique by adding a unique amount of time less than a second
-        if tag != 'scnlv1':
-            # add 1E-6 seconds to time based upon occulting_inst_id
-            # additional 1E-7 seconds added based upon cosmic ID
-            # get cosmic satellite ID
-            c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
-            # time offset
-            utsec += output.occulting_sat_id*1.e-5 + c_id*1.e-6
-        else:
-            # construct time out of three different parameters
-            # duration must be less than 10,000
-            # prn_id is allowed two characters
-            # antenna_id gets one
-            # prn_id and antenna_id are not sufficient for a unique time
-            utsec += output.prn_id*1.e-2 + output.duration.astype(int)*1.E-6
-            utsec += output.antenna_id*1.E-7
-        # move to Index
-        output.index = \
-            pysat.utils.time.create_datetime_index(year=output.year,
-                                                   month=output.month,
-                                                   day=output.day,
-                                                   uts=utsec)
-        if not output.index.is_unique:
-            raise ValueError('Datetimes returned by load_files not unique.')
-        # make sure UTS strictly increasing
-        output.sort_index(inplace=True)
-        # use the first available file to pick out meta information
-        profile_meta = pysat.Meta()
+        output['index'] = \
+            pysat.utils.time.create_datetime_index(year=output.year.values,
+                                                   month=output.month.values,
+                                                   day=output.day.values,
+                                                   uts=utsec.values)
+        # Rename index
+        output = output.rename(index='time')
+
+        # Ensure time is increasing
+        output = output.sortby('time')
+
+        if tag == 'ionprf':
+            # Set up coordinates
+            output = output.set_coords(['MSL_alt', 'GEO_lat', 'GEO_lon',
+                                        'OCC_azi'])
+            # Deal with altitude binning
+
+
+
+        # Use the first available file to pick out meta information
         meta = pysat.Meta()
         ind = 0
         repeat = True
@@ -345,7 +338,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 keys = data.variables.keys()
                 for key in keys:
                     if 'units' in data.variables[key].ncattrs():
-                        profile_meta[key] = {
+                        meta[key] = {
                             meta.labels.units: data.variables[key].units,
                             meta.labels.name: data.variables[key].long_name}
                 repeat = False
@@ -353,11 +346,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 # file was empty, try the next one by incrementing ind
                 ind += 1
 
-        meta['profiles'] = profile_meta
         return output, meta
     else:
         # no data
-        return pds.DataFrame(None), pysat.Meta()
+        return xr.Dataset(None), pysat.Meta()
 
 
 def _process_lengths(lengths):
@@ -428,8 +420,7 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
 
             # Get a list of all data variables from the first file only
             if i == 0:
-                keys = data.variables.keys()
-                for key in keys:
+                for key in data.variables.keys():
                     data_var_keys.append(key)
                     main_dict[key] = []
                     main_dict_len[key] = []
