@@ -404,133 +404,157 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     """
     output = [None] * len(files)
     drop_idx = []
+
+    # Dict to store information about each data variable and data lengths
+    # from each file loaded.
     main_dict = {}
     main_dict_len = {}
 
-    safe_keys = []
+    # List of all data variables in the file
+    data_var_keys = []
+
+    # Iterate through files and load data
     for (i, fname) in enumerate(files):
         try:
+            # Open file for access
             data = netCDF4.Dataset(fname)
-            # build up dictionary will all ncattrs
-            new = {}
-            # get list of file attributes
-            ncattrsList = data.ncattrs()
-            # these include information about where the profile observed
-            for d in ncattrsList:
-                new[d] = data.getncattr(d)
 
+            # Get list of file attributes, which includes information about
+            # where the profile is observed, and store.
+            ncattrsList = data.ncattrs()
+            file_attrs = {}
+            for d in ncattrsList:
+                file_attrs[d] = data.getncattr(d)
+
+            # Get a list of all data variables from the first file only
             if i == 0:
                 keys = data.variables.keys()
                 for key in keys:
-                    safe_keys.append(key)
+                    data_var_keys.append(key)
                     main_dict[key] = []
                     main_dict_len[key] = []
 
-            # load all of the variables in the netCDF
-            for key in safe_keys:
-                # grab data
+            # Load all of the variables in the netCDF
+            for key in data_var_keys:
+                # Grab data
                 t_list = data.variables[key][:]
-                # reverse byte order if needed
+
+                # Reverse byte order if needed and store
                 if t_list.dtype.byteorder != '=':
                     main_dict[key].append(t_list.byteswap().newbyteorder())
                 else:
                     main_dict[key].append(t_list)
-                # store lengths
+
+                # Store length of data for the file
                 main_dict_len[key].append(len(main_dict[key][-1]))
 
-            output[i] = new
+            output[i] = file_attrs
             data.close()
+
         except RuntimeError:
-            # some of the files have zero bytes, which causes a read error
-            # this stores the index of these zero byte files so I can drop
-            # the Nones the gappy file leaves behind
+            # Some of the files have zero bytes, which causes a read error.
+            # Store the index of these zero byte files so they can be dropped.
             drop_idx.append(i)
 
-    # drop anything that came from the zero byte files
+    # Drop anything that came from the zero byte files
     drop_idx.reverse()
     for i in drop_idx:
         del output[i]
 
-    # combine different sub lists in main_dict into one
-    for key in safe_keys:
-        main_dict[key] = np.hstack(main_dict[key])
-        main_dict_len[key] = np.cumsum(main_dict_len[key])
+    # Each GPS occultation has a different number of data points.
+    # Generate numpy arrays based upon the largest size.
+    for key in main_dict_len.keys():
+        main_dict_len[key] = np.max(main_dict_len[key])
 
-    if tag == 'atmprf':
-        # this file has three groups of variable lengths
-        # each goes into its own DataFrame
-        # two are processed here, last is processed like other
-        # file types
-        # see code just after this if block for more
-        # general explanation on lines just below
-        p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
-        p_dict = {}
-        # get indices needed to parse data
-        plengths = main_dict_len['OL_vec1']
-        max_p_length = np.max(plengths)
-        plengths, plengths2 = _process_lengths(plengths)
-        # collect data
-        for key in p_keys:
-            p_dict[key] = main_dict.pop(key)
-            _ = main_dict_len.pop(key)
-        psub_frame = pds.DataFrame(p_dict)
+    for key in main_dict.keys():
+        data_arr = np.full((len(main_dict[key]), main_dict_len[key]), np.nan)
+        for i in range(len(main_dict[key])):
+            data_arr[i, 0:len(main_dict[key][i])] = main_dict[key][i]
 
-        # change in variables in this file type
-        # depending upon the processing applied at UCAR
-        if 'ies' in main_dict.keys():
-            q_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
-        else:
-            q_keys = ['OL_ipar', 'OL_par']
-        q_dict = {}
-        # get indices needed to parse data
-        qlengths = main_dict_len['OL_par']
-        max_q_length = np.max(qlengths)
-        qlengths, qlengths2 = _process_lengths(qlengths)
-        # collect data
-        for key in q_keys:
-            q_dict[key] = main_dict.pop(key)
-            _ = main_dict_len.pop(key)
-        qsub_frame = pds.DataFrame(q_dict)
+        main_dict[key] = data_arr
 
-        max_length = np.max([max_p_length, max_q_length])
-        length_arr = np.arange(max_length)
-        # small sub DataFrames
-        for i in np.arange(len(output)):
-            output[i]['OL_vecs'] = psub_frame.iloc[plengths[i]:plengths[i+1], :]
-            output[i]['OL_vecs'].index = \
-                length_arr[:plengths2[i+1]-plengths2[i]]
-            output[i]['OL_pars'] = qsub_frame.iloc[qlengths[i]:qlengths[i+1], :]
-            output[i]['OL_pars'].index = \
-                length_arr[:qlengths2[i+1]-qlengths2[i]]
-
-    # create a single data frame with all bits, then
-    # break into smaller frames using views
-    main_frame = pds.DataFrame(main_dict)
-    # get indices needed to parse data
-    lengths = main_dict_len[list(main_dict.keys())[0]]
-    # get largest length and create numpy array with it
-    # used to speed up reindexing below
-    max_length = np.max(lengths)
-    length_arr = np.arange(max_length)
-    # process lengths for ease of parsing
-    lengths, lengths2 = _process_lengths(lengths)
-    # break main profile data into each individual profile
-    for i in np.arange(len(output)):
-        output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i+1], :]
-        output[i]['profiles'].index = length_arr[:lengths2[i+1]-lengths2[i]]
-
-    if tag == 'ionprf':
-        if altitude_bin is not None:
-            for out in output:
-                rval = (out['profiles']['MSL_alt']/altitude_bin).round().values
-                out['profiles'].index = rval * altitude_bin
-                out['profiles'] = \
-                    out['profiles'].groupby(out['profiles'].index.values).mean()
-        else:
-            for out in output:
-                out['profiles'].index = out['profiles']['MSL_alt']
+    # Collect all simple variable output into a Dataset
+    output = pds.DataFrame(output).to_xarray()
+    for key in main_dict:
+        output[key] = (['index', 'RO'], main_dict[key])
 
     return output
+
+    # if tag == 'atmprf':
+    #     # this file has three groups of variable lengths
+    #     # each goes into its own DataFrame
+    #     # two are processed here, last is processed like other
+    #     # file types
+    #     # see code just after this if block for more
+    #     # general explanation on lines just below
+    #     p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
+    #     p_dict = {}
+    #     # get indices needed to parse data
+    #     plengths = main_dict_len['OL_vec1']
+    #     max_p_length = np.max(plengths)
+    #     plengths, plengths2 = _process_lengths(plengths)
+    #     # collect data
+    #     for key in p_keys:
+    #         p_dict[key] = main_dict.pop(key)
+    #         _ = main_dict_len.pop(key)
+    #     psub_frame = pds.DataFrame(p_dict)
+    #
+    #     # change in variables in this file type
+    #     # depending upon the processing applied at UCAR
+    #     if 'ies' in main_dict.keys():
+    #         q_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
+    #     else:
+    #         q_keys = ['OL_ipar', 'OL_par']
+    #     q_dict = {}
+    #     # get indices needed to parse data
+    #     qlengths = main_dict_len['OL_par']
+    #     max_q_length = np.max(qlengths)
+    #     qlengths, qlengths2 = _process_lengths(qlengths)
+    #     # collect data
+    #     for key in q_keys:
+    #         q_dict[key] = main_dict.pop(key)
+    #         _ = main_dict_len.pop(key)
+    #     qsub_frame = pds.DataFrame(q_dict)
+    #
+    #     max_length = np.max([max_p_length, max_q_length])
+    #     length_arr = np.arange(max_length)
+    #     # small sub DataFrames
+    #     for i in np.arange(len(output)):
+    #         output[i]['OL_vecs'] = psub_frame.iloc[plengths[i]:plengths[i+1], :]
+    #         output[i]['OL_vecs'].index = \
+    #             length_arr[:plengths2[i+1]-plengths2[i]]
+    #         output[i]['OL_pars'] = qsub_frame.iloc[qlengths[i]:qlengths[i+1], :]
+    #         output[i]['OL_pars'].index = \
+    #             length_arr[:qlengths2[i+1]-qlengths2[i]]
+    #
+    # # create a single data frame with all bits, then
+    # # break into smaller frames using views
+    # main_frame = pds.DataFrame(main_dict)
+    # # get indices needed to parse data
+    # lengths = main_dict_len[list(main_dict.keys())[0]]
+    # # get largest length and create numpy array with it
+    # # used to speed up reindexing below
+    # max_length = np.max(lengths)
+    # length_arr = np.arange(max_length)
+    # # process lengths for ease of parsing
+    # lengths, lengths2 = _process_lengths(lengths)
+    # # break main profile data into each individual profile
+    # for i in np.arange(len(output)):
+    #     output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i+1], :]
+    #     output[i]['profiles'].index = length_arr[:lengths2[i+1]-lengths2[i]]
+    #
+    # if tag == 'ionprf':
+    #     if altitude_bin is not None:
+    #         for out in output:
+    #             rval = (out['profiles']['MSL_alt']/altitude_bin).round().values
+    #             out['profiles'].index = rval * altitude_bin
+    #             out['profiles'] = \
+    #                 out['profiles'].groupby(out['profiles'].index.values).mean()
+    #     else:
+    #         for out in output:
+    #             out['profiles'].index = out['profiles']['MSL_alt']
+    #
+    # return output
 
 
 def download(date_array, tag, inst_id, data_path=None,
