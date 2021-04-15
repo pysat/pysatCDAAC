@@ -318,11 +318,80 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
         if tag == 'ionprf':
             # Set up coordinates
-            output = output.set_coords(['MSL_alt', 'GEO_lat', 'GEO_lon',
-                                        'OCC_azi'])
-            # Deal with altitude binning
+            coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
+            var_labels = ['ELEC_dens', 'TEC_cal']
 
+            # Apply coordinates to loaded data.
+            output = output.set_coords(coord_labels)
 
+            if altitude_bin is not None:
+                # Deal with altitude binning, can't do it directly with
+                # xarray since all dimensions get grouped.
+
+                coord_labels.extend(['MSL_bin_alt'])
+                all_labels = []
+                all_labels.extend(coord_labels)
+                all_labels.extend(var_labels)
+
+                # Normalize and round actual altitude values by altitude_bin
+                bin_alts = (output['MSL_alt'] / altitude_bin).round().values
+
+                # Reconstruct altitude from bin_alts value
+                alts = bin_alts * altitude_bin
+
+                # Create array for bounds of each bin that data will be
+                # grouped into.
+                bin_arr = np.arange(np.nanmax(bin_alts))
+
+                # Indexing information mapping which altitude goes to which bin
+                dig_bins = np.digitize(bin_alts, bin_arr)
+
+                # Create arrays to store results
+                new_coords = {}
+                for label in all_labels:
+                    new_coords[label] = np.full(
+                        (len(output['time']), len(bin_arr)), np.nan)
+
+                # Go through each profile and mean values in each altitude bin.
+                # Solution inspired by
+                # (https://stackoverflow.com/questions/38013778/
+                # is-there-any-numpy-group-by-function)
+                # However, unique didn't work how I wanted for multi-dimensional
+                # array, thus the for loop.
+                for i in range(len(output['time'])):
+                    ans = np.unique(dig_bins[i, :], return_index=True)
+
+                    for label in all_labels:
+                        if label == 'MSL_bin_alt':
+                            temp_calc = np.split(alts[i, :], ans[1][1:])
+                        else:
+                            temp_calc = np.split(output[label].values[i, :],
+                                                 ans[1][1:])
+                        new_coords[label][i, :] = [np.mean(temp_vals) for
+                                                   temp_vals in temp_calc]
+
+                # Create new Dataset with binned data values.
+                # First, prep coordinate data.
+                coords = {}
+                data_vars = {}
+                for key in coord_labels:
+                    coords[key] = (('time', 'RO'), new_coords[key])
+                coords['time'] = output['time']
+
+                # Create data_vars input dict
+                for key in var_labels:
+                    data_vars[key] = (('time', 'RO'), new_coords[key])
+
+                # Create new Dataset
+                new_set = xr.Dataset(data_vars=data_vars, coords=coords)
+
+                # Copy over other variables
+                for key in output.data_vars:
+                    if key not in all_labels:
+                        new_set[key] = output[key]
+
+                # Replace initial Dataset
+                output = new_set
 
         # Use the first available file to pick out meta information
         meta = pysat.Meta()
@@ -517,22 +586,6 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     #         output[i]['OL_pars'] = qsub_frame.iloc[qlengths[i]:qlengths[i+1], :]
     #         output[i]['OL_pars'].index = \
     #             length_arr[:qlengths2[i+1]-qlengths2[i]]
-    #
-    # # create a single data frame with all bits, then
-    # # break into smaller frames using views
-    # main_frame = pds.DataFrame(main_dict)
-    # # get indices needed to parse data
-    # lengths = main_dict_len[list(main_dict.keys())[0]]
-    # # get largest length and create numpy array with it
-    # # used to speed up reindexing below
-    # max_length = np.max(lengths)
-    # length_arr = np.arange(max_length)
-    # # process lengths for ease of parsing
-    # lengths, lengths2 = _process_lengths(lengths)
-    # # break main profile data into each individual profile
-    # for i in np.arange(len(output)):
-    #     output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i+1], :]
-    #     output[i]['profiles'].index = length_arr[:lengths2[i+1]-lengths2[i]]
     #
     # if tag == 'ionprf':
     #     if altitude_bin is not None:
