@@ -223,7 +223,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # overloading revision keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*.*/*.{year:04d}.{day:03d}',
+        format_str = ''.join(('*/*/*.{year:04d}.{day:03d}',
                               '.{hour:02d}.{minute:02d}.*_nc'))
     # process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
@@ -300,8 +300,23 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
     num = len(fnames)
     # Make sure there are files to read
     if num != 0:
+
+        if tag == 'atmprf':
+            coords = {}
+            p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
+            dim_label = 'dim1'
+            for key in p_keys:
+                coords[key] = dim_label
+
+            p_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
+            dim_label = 'dim2'
+            for key in p_keys:
+                coords[key] = dim_label
+        else:
+            coords = {}
+
         # Call generalized load_files routine
-        output = load_files(fnames, tag=tag, inst_id=inst_id)
+        output = load_files(fnames, tag=tag, inst_id=inst_id, coords=coords)
 
         # Create datetime index
         utsec = output.hour * 3600. + output.minute * 60. + output.second
@@ -425,7 +440,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 # separate routine for doing actual loading. This was broken off from main load
 # because I was playing around with multiprocessor loading
 # yielded about 20% improvement in execution time
-def load_files(files, tag=None, inst_id=None):
+def load_files(files, tag=None, inst_id=None, coords=None):
     """Load COSMIC data files directly from a given list.
 
     May be directly called by user, but in general is called by load.  This is
@@ -440,6 +455,11 @@ def load_files(files, tag=None, inst_id=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
+    coords : dict or NoneType
+    (NOT CORRECT)
+        List of data variables keyed by the coordinate name that should
+        be assigned when loading data. If a variable name not provided will
+        default to 'RO'. (default=None)
 
     Returns
     -------
@@ -449,6 +469,9 @@ def load_files(files, tag=None, inst_id=None):
     """
     output = [None] * len(files)
     drop_idx = []
+
+    if coords is None:
+        coords = {}
 
     # Dict to store information about each data variable and data lengths
     # from each file loaded.
@@ -520,7 +543,9 @@ def load_files(files, tag=None, inst_id=None):
     # Collect all simple variable output into a Dataset
     output = pds.DataFrame(output).to_xarray()
     for key in main_dict:
-        output[key] = (['index', 'RO'], main_dict[key])
+        if key not in coords:
+            coords[key] = 'RO'
+        output[key] = (['index', coords[key]], main_dict[key])
 
     return output
 
