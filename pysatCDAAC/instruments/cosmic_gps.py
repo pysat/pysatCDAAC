@@ -367,6 +367,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                         else:
                             temp_calc = np.split(output[label].values[i, :],
                                                  ans[1][1:])
+                        # Average all values in each bin
                         new_coords[label][i, 0:len(temp_calc)] = \
                             [np.mean(temp_vals) for temp_vals in temp_calc]
 
