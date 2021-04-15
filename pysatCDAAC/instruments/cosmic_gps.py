@@ -298,7 +298,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             raise ValueError(estr)
 
     num = len(fnames)
-    # make sure there are files to read
+    # Make sure there are files to read
     if num != 0:
         # Call generalized load_files routine
         output = load_files(fnames, tag=tag, inst_id=inst_id)
