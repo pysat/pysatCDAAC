@@ -425,7 +425,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 # separate routine for doing actual loading. This was broken off from main load
 # because I was playing around with multiprocessor loading
 # yielded about 20% improvement in execution time
-def load_files(files, tag=None, inst_id=None, altitude_bin=None):
+def load_files(files, tag=None, inst_id=None):
     """Load COSMIC data files directly from a given list.
 
     May be directly called by user, but in general is called by load.  This is
@@ -440,9 +440,6 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
-        Number of kilometers to bin altitude profiles by when loading.
-        Currently only supported for tag='ionprf'.
 
     Returns
     -------
