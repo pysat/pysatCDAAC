@@ -421,6 +421,12 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
+        elif tag == 'wetprf':
+            # Set up coordinates
+            coord_labels = ['MSL_alt', 'Lat', 'Lon']
+
+            # Apply coordinates to loaded data.
+            output = output.set_coords(coord_labels)
 
         # Use the first available file to pick out meta information
         meta = pysat.Meta()
