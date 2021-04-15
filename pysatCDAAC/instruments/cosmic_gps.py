@@ -412,13 +412,15 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         elif tag == 'atmprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-            var_labels = ['Temp', 'Pres', 'Bend_ang1', 'Bend_ang2',
-                          'Bend_ang', 'Impact_height', 'Bend_ang_stdv',
-                          'Bend_ang_conf', 'Ref']
 
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
+        elif tag == 'sonprf':
+            # Set up coordinates
+            coord_labels = ['MSL_alt', 'lat', 'lon']
 
+            # Apply coordinates to loaded data.
+            output = output.set_coords(coord_labels)
 
         # Use the first available file to pick out meta information
         meta = pysat.Meta()
