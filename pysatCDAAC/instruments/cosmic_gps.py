@@ -87,8 +87,8 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
                     'scnlv1': dt.datetime(2008, 1, 1)}}
-_test_download = {'': {kk: True for kk in tags.keys()}}
-_password_req = {'': {kk: False for kk in tags.keys()}}
+_test_download = {'': {kk: False for kk in tags.keys()}}
+_password_req = {'': {kk: True for kk in tags.keys()}}
 
 
 # ----------------------------------------------------------------------------
@@ -223,7 +223,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # overloading revision keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*/*/*.{year:04d}.{day:03d}',
+        format_str = ''.join(('*.*/*.{year:04d}.{day:03d}',
                               '.{hour:02d}.{minute:02d}.*_nc'))
     # process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
