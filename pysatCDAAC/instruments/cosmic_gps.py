@@ -409,7 +409,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
                 # Replace initial Dataset
                 output = new_set
-        if tag == 'atmprf':
+        elif tag == 'atmprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
             var_labels = ['Temp', 'Pres', 'Bend_ang1', 'Bend_ang2',
