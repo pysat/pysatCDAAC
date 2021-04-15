@@ -549,66 +549,6 @@ def load_files(files, tag=None, inst_id=None, coords=None):
 
     return output
 
-    # if tag == 'atmprf':
-    #     # this file has three groups of variable lengths
-    #     # each goes into its own DataFrame
-    #     # two are processed here, last is processed like other
-    #     # file types
-    #     # see code just after this if block for more
-    #     # general explanation on lines just below
-    #     p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
-    #     p_dict = {}
-    #     # get indices needed to parse data
-    #     plengths = main_dict_len['OL_vec1']
-    #     max_p_length = np.max(plengths)
-    #     plengths, plengths2 = _process_lengths(plengths)
-    #     # collect data
-    #     for key in p_keys:
-    #         p_dict[key] = main_dict.pop(key)
-    #         _ = main_dict_len.pop(key)
-    #     psub_frame = pds.DataFrame(p_dict)
-    #
-    #     # change in variables in this file type
-    #     # depending upon the processing applied at UCAR
-    #     if 'ies' in main_dict.keys():
-    #         q_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
-    #     else:
-    #         q_keys = ['OL_ipar', 'OL_par']
-    #     q_dict = {}
-    #     # get indices needed to parse data
-    #     qlengths = main_dict_len['OL_par']
-    #     max_q_length = np.max(qlengths)
-    #     qlengths, qlengths2 = _process_lengths(qlengths)
-    #     # collect data
-    #     for key in q_keys:
-    #         q_dict[key] = main_dict.pop(key)
-    #         _ = main_dict_len.pop(key)
-    #     qsub_frame = pds.DataFrame(q_dict)
-    #
-    #     max_length = np.max([max_p_length, max_q_length])
-    #     length_arr = np.arange(max_length)
-    #     # small sub DataFrames
-    #     for i in np.arange(len(output)):
-    #         output[i]['OL_vecs'] = psub_frame.iloc[plengths[i]:plengths[i+1], :]
-    #         output[i]['OL_vecs'].index = \
-    #             length_arr[:plengths2[i+1]-plengths2[i]]
-    #         output[i]['OL_pars'] = qsub_frame.iloc[qlengths[i]:qlengths[i+1], :]
-    #         output[i]['OL_pars'].index = \
-    #             length_arr[:qlengths2[i+1]-qlengths2[i]]
-    #
-    # if tag == 'ionprf':
-    #     if altitude_bin is not None:
-    #         for out in output:
-    #             rval = (out['profiles']['MSL_alt']/altitude_bin).round().values
-    #             out['profiles'].index = rval * altitude_bin
-    #             out['profiles'] = \
-    #                 out['profiles'].groupby(out['profiles'].index.values).mean()
-    #     else:
-    #         for out in output:
-    #             out['profiles'].index = out['profiles']['MSL_alt']
-    #
-    # return output
-
 
 def download(date_array, tag, inst_id, data_path=None,
              user=None, password=None):
