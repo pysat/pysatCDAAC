@@ -301,6 +301,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
     # Make sure there are files to read
     if num != 0:
 
+        # Set up loading files with a mixture of data lengths.
         if tag == 'atmprf':
             coords = {}
             p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
