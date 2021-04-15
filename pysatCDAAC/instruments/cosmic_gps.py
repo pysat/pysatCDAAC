@@ -456,10 +456,9 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     inst_id : str or NoneType
         satellite id or None (default=None)
     coords : dict or NoneType
-    (NOT CORRECT)
-        List of data variables keyed by the coordinate name that should
-        be assigned when loading data. If a variable name not provided will
-        default to 'RO'. (default=None)
+        Dict keyed by data variable name that stores the coordinate name that
+        should be assigned when loading data. If a variable name not provided
+        will default to 'RO'. (default=None)
 
     Returns
     -------
