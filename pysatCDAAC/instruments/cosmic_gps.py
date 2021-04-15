@@ -408,6 +408,16 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
                 # Replace initial Dataset
                 output = new_set
+        if tag == 'atmprf':
+            # Set up coordinates
+            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
+            var_labels = ['Temp', 'Pres', 'Bend_ang1', 'Bend_ang2',
+                          'Bend_ang', 'Impact_height', 'Bend_ang_stdv',
+                          'Bend_ang_conf', 'Ref']
+
+            # Apply coordinates to loaded data.
+            output = output.set_coords(coord_labels)
+
 
         # Use the first available file to pick out meta information
         meta = pysat.Meta()
@@ -428,18 +438,18 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                             meta.labels.name: data.variables[key].long_name}
                 repeat = False
             except RuntimeError:
-                # file was empty, try the next one by incrementing ind
+                # File was empty, try the next one by incrementing ind
                 ind += 1
 
         return output, meta
     else:
-        # no data
+        # No data
         return xr.Dataset(None), pysat.Meta()
 
 
-# separate routine for doing actual loading. This was broken off from main load
-# because I was playing around with multiprocessor loading
-# yielded about 20% improvement in execution time
+# Separate routine for doing actual loading. This was broken off from main load
+# because I was playing around with multiprocessor loading.
+# Yielded about 20% improvement in execution time
 def load_files(files, tag=None, inst_id=None, coords=None):
     """Load COSMIC data files directly from a given list.
 
