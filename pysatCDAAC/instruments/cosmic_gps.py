@@ -421,20 +421,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         return xr.Dataset(None), pysat.Meta()
 
 
-def _process_lengths(lengths):
-    """Prep lengths for parsing.
-
-    Internal func used by load_files.
-    """
-
-    lengths = lengths.tolist()
-    lengths.insert(0, 0)
-    lengths = np.array(lengths)
-    lengths2 = lengths.copy()
-    lengths[-1] += 1
-    return lengths, lengths2
-
-
 # separate routine for doing actual loading. This was broken off from main load
 # because I was playing around with multiprocessor loading
 # yielded about 20% improvement in execution time
