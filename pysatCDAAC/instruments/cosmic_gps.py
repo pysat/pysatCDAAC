@@ -326,7 +326,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                                                    month=output.month.values,
                                                    day=output.day.values,
                                                    uts=utsec.values)
-        # Rename index
+        # Rename index to time
+        if tag == 'scnlv1':
+            # scnlv1 files already have a 2D time variable, it is a conflict
+            output = output.rename(time='profile_time')
         output = output.rename(index='time')
 
         # Ensure time is increasing
@@ -424,6 +427,12 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         elif tag == 'wetprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
+
+            # Apply coordinates to loaded data.
+            output = output.set_coords(coord_labels)
+        elif tag == 'scnlv1':
+            # Set up coordinates
+            coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
 
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
