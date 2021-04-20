@@ -304,14 +304,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # Set up loading files with a mixture of data lengths.
         if tag == 'atmprf':
             coords = {}
-            p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
+            temp_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
             dim_label = 'dim1'
-            for key in p_keys:
+            for key in temp_keys:
                 coords[key] = dim_label
 
-            p_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
+            temp_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
             dim_label = 'dim2'
-            for key in p_keys:
+            for key in temp_keys:
                 coords[key] = dim_label
         else:
             # All other files have a single 2D dimension
@@ -339,39 +339,27 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         if tag == 'ionprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-            var_labels = ['ELEC_dens', 'TEC_cal']
-
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
 
         elif tag == 'atmprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-            var_labels = ['Ref', 'Pres', 'Temp', 'Bend_ang1', 'Bend_ang2',
-                          'Bend_ang', 'Impact_height', 'Bend_ang_stdv',
-                          'Bend_ang_conf']
 
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
         elif tag == 'sonprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'lat', 'lon']
 
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
         elif tag == 'wetprf':
             # Set up coordinates
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
 
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
         elif tag == 'scnlv1':
             # Set up coordinates
             coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
 
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
+        # Apply coordinates to loaded data.
+        output = output.set_coords(coord_labels)
 
+        # Bin by altitude is requested by user
         if altitude_bin is not None:
             # Deal with altitude binning, can't do it directly with
             # xarray since all dimensions get grouped.
@@ -383,18 +371,24 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # Get all variables/coordinates using same dimensions as MSL_alt
             # and sort.
             msl_dims = output['MSL_alt'].dims
-            all_types = [var for var in output.data_vars]
-            all_types.extend([coord for coord in output.coords])
-            for var in all_types:
+
+            var_labels = [var for var in output.data_vars
+                          if output[var].dims == msl_dims]
+            coord_labels = [coord for coord in output.coords
+                            if output[coord].dims == msl_dims]
+
+            all_labels =[]
+            all_labels.extend(var_labels)
+            all_labels.extend(coord_labels)
+
+            for var in all_labels:
                 if output[var].dims == msl_dims:
                     output[var] = (msl_dims,
                                    np.take_along_axis(output[var].values, idx,
                                                       axis=1))
 
             coord_labels.extend(['MSL_bin_alt'])
-            all_labels = []
-            all_labels.extend(coord_labels)
-            all_labels.extend(var_labels)
+            all_labels.extend(['MSL_bin_alt'])
 
             # Normalize and round actual altitude values by altitude_bin
             bin_alts = (output['MSL_alt'] / altitude_bin).round().values
