@@ -145,7 +145,7 @@ def clean(self):
                 idx, = np.where((profile.ELEC_dens < 0)
                                 & (profile.index <= 325))
                 if len(idx) > 0:
-                    profile.iloc[0:idx[-1]+1] = np.nan
+                    profile.iloc[0:(idx[-1] + 1)] = np.nan
                 # take out all densities above the lowest altitude negative
                 # dens above 325
                 idx, = np.where((profile.ELEC_dens < 0)
@@ -237,7 +237,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         hour = np.array(stored['hour'])
         minute = np.array(stored['minute'])
         try:
-            uts = hour*3600.0 + minute*60.0
+            uts = hour * 3600.0 + minute * 60.0
         except TypeError as err:
             raise TypeError(' '.join(('unable to construct time from',
                                       'filename\n{:}'.format(str(err)))))
@@ -311,15 +311,15 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # get cosmic satellite ID
             c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
             # time offset
-            utsec += output.occulting_sat_id*1.e-5 + c_id*1.e-6
+            utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
         else:
             # construct time out of three different parameters
             # duration must be less than 10,000
             # prn_id is allowed two characters
             # antenna_id gets one
             # prn_id and antenna_id are not sufficient for a unique time
-            utsec += output.prn_id*1.e-2 + output.duration.astype(int)*1.E-6
-            utsec += output.antenna_id*1.E-7
+            utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
+            utsec += output.antenna_id * 1.E-7
         # move to Index
         output.index = \
             pysat.utils.time.create_datetime_index(year=output.year,
@@ -496,12 +496,14 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         length_arr = np.arange(max_length)
         # small sub DataFrames
         for i in np.arange(len(output)):
-            output[i]['OL_vecs'] = psub_frame.iloc[plengths[i]:plengths[i+1], :]
+            output[i]['OL_vecs'] = \
+                psub_frame.iloc[plengths[i]:plengths[i + 1], :]
             output[i]['OL_vecs'].index = \
-                length_arr[:plengths2[i+1]-plengths2[i]]
-            output[i]['OL_pars'] = qsub_frame.iloc[qlengths[i]:qlengths[i+1], :]
+                length_arr[:plengths2[i + 1] - plengths2[i]]
+            output[i]['OL_pars'] = \
+                qsub_frame.iloc[qlengths[i]:qlengths[i + 1], :]
             output[i]['OL_pars'].index = \
-                length_arr[:qlengths2[i+1]-qlengths2[i]]
+                length_arr[:qlengths2[i + 1] - qlengths2[i]]
 
     # create a single data frame with all bits, then
     # break into smaller frames using views
@@ -516,13 +518,14 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     lengths, lengths2 = _process_lengths(lengths)
     # break main profile data into each individual profile
     for i in np.arange(len(output)):
-        output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i+1], :]
-        output[i]['profiles'].index = length_arr[:lengths2[i+1]-lengths2[i]]
+        output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i + 1], :]
+        output[i]['profiles'].index = length_arr[:lengths2[i + 1] - lengths2[i]]
 
     if tag == 'ionprf':
         if altitude_bin is not None:
             for out in output:
-                rval = (out['profiles']['MSL_alt']/altitude_bin).round().values
+                rval = (out['profiles']['MSL_alt']
+                        / altitude_bin).round().values
                 out['profiles'].index = rval * altitude_bin
                 out['profiles'] = \
                     out['profiles'].groupby(out['profiles'].index.values).mean()
