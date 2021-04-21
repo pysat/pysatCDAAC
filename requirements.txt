@@ -1,0 +1,9 @@
+netCDF4
+requests
+beautifulsoup4
+lxml
+numpy
+pandas
+xarray
+portalocker
+pysat>=3.0.0
