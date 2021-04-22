@@ -30,22 +30,15 @@ altitude_bin
 Note
 ----
 - 'ionprf: 'ionPrf' ionosphere profiles
-- 'sonprf': 'sonPrf' files
 - 'wetprf': 'wetPrf' files
 - 'atmprf': 'atmPrf' files
-- 'scnlv1': 'scnLv1' files
+# - 'bfrprf': 'brfPrf' files
+- 'eraprf': 'eraPrf' files
+- 'gfsprf': 'gfsPrf' files
 
 Warnings
 --------
 - Routine was not produced by COSMIC team
-- More recent versions of netCDF4 and numpy limit the casting of some variable
-  types into others. This issue could prevent data loading for some variables
-  such as 'MSL_Altitude' in the 'sonprf' and 'wetprf' files. The default
-  UserWarning when this occurs is
-  ::
-
-    'UserWarning: WARNING: missing_value not used since it cannot be safely
-    cast to variable data type'
 
 """
 
@@ -68,20 +61,22 @@ from pysat.utils import files as futils
 platform = 'cosmic'
 name = 'gps'
 tags = {'ionprf': '',
-        'sonprf': '',
         'wetprf': '',
         'atmprf': '',
-        'scnlv1': ''}
-inst_ids = {'': ['ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1']}
+        # 'bfrprf': '',
+        'eraprf': '',
+        'gfsprf': ''}
+inst_ids = {'': ['ionprf', 'wetprf', 'atmprf', 'eraprf', 'gfsprf']}
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
 _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
-                    'sonprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
-                    'scnlv1': dt.datetime(2008, 1, 1)}}
+                    # 'bfrprf': dt.datetime(2008, 1, 1),
+                    'eraprf': dt.datetime(2008, 1, 1),
+                    'gfsprf': dt.datetime(2008, 1, 1)}}
 _test_download = {'': {kk: True for kk in tags.keys()}}
 _password_req = {'': {kk: False for kk in tags.keys()}}
 
@@ -222,6 +217,10 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                               '{day:03d}.{hour:02d}.{minute:02d}.G{cycle:02d}_',
                               '{version:04d}.????_nc'))
+        # if tag == 'bfrprf':
+        #     # These files end with _bufr instead of _nc
+        #     format_str = format_str[:-2]
+        #     format_str = ''.join((format_str, 'bufr'))
 
     # Process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
@@ -590,17 +589,9 @@ def download(date_array, tag, inst_id, data_path=None,
     the end user.
 
     """
-
-    if tag == 'ionprf':
-        sub_dir = 'ionPrf'
-    elif tag == 'sonprf':
-        sub_dir = 'sonPrf'
-    elif tag == 'wetprf':
-        sub_dir = 'wetPrf'
-    elif tag == 'atmprf':
-        sub_dir = 'atmPrf'
-    elif tag == 'scnlv1':
-        sub_dir = 'scnLv1'
+    global tags
+    if tag in tags:
+        sub_dir = ''.join((tag[0:3], 'Prf'))
     else:
         raise ValueError('Unknown cosmic_gps tag')
 
@@ -618,7 +609,6 @@ def download(date_array, tag, inst_id, data_path=None,
                              '_repro2013',
                              '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                    doy=doy)))
-
             # Make online connection
             req = requests.get(dwnld, auth=auth)
             req.raise_for_status()
