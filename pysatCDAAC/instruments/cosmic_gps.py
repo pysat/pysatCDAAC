@@ -52,8 +52,6 @@ Warnings
 import datetime as dt
 import os
 import requests
-import shutil
-import sys
 import tarfile
 
 import numpy as np
