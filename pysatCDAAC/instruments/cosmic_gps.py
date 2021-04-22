@@ -219,7 +219,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*/*_C{revision:03d}.{year:04d}.',
+        format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                               '{day:03d}.{hour:02d}.{minute:02d}.G{cycle:02d}_',
                               '{version:04d}.????_nc'))
 
