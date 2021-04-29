@@ -32,7 +32,6 @@ Note
 - 'ionprf: 'ionPrf' ionosphere profiles
 - 'wetprf': 'wetPrf' files
 - 'atmprf': 'atmPrf' files
-# - 'bfrprf': 'brfPrf' files
 - 'eraprf': 'eraPrf' files
 - 'gfsprf': 'gfsPrf' files
 
@@ -60,13 +59,23 @@ from pysat.utils import files as futils
 
 platform = 'cosmic'
 name = 'gps'
-tags = {'ionprf': '',
+
+l1_tags = ['ionPhs', 'podTec', 'scnLv1']
+lower_l1_tags = [tag.lower() for tag in l1_tags]
+
+l2_tags = ['ionPrf', 'wetPrf', 'atmPrf', 'eraPrf', 'gfsPrf']
+lower_l2_tags = [tag.lower() for tag in l2_tags]
+
+tags = {'ionprf': 'Ionospheric Profiles',
         'wetprf': '',
-        'atmprf': '',
-        # 'bfrprf': '',
+        'atmprf': 'Atmospheric Profiles',
         'eraprf': '',
         'gfsprf': ''}
-inst_ids = {'': ['ionprf', 'wetprf', 'atmprf', 'eraprf', 'gfsprf']}
+for tag in l1_tags:
+    tags[tag] = ''
+
+inst_ids = {'': lower_l2_tags,
+            'level_1b': lower_l1_tags}
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
@@ -74,9 +83,15 @@ inst_ids = {'': ['ionprf', 'wetprf', 'atmprf', 'eraprf', 'gfsprf']}
 _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
-                    # 'bfrprf': dt.datetime(2008, 1, 1),
                     'eraprf': dt.datetime(2008, 1, 1),
-                    'gfsprf': dt.datetime(2008, 1, 1)}}
+                    'gfsprf': dt.datetime(2008, 1, 1)},
+               'level_1b': {'gpsbit': dt.datetime(2008, 1, 1),
+                            'ionphs': dt.datetime(2008, 1, 1),
+                            'leoc1k': dt.datetime(2008, 1, 1),
+                            'leoorb': dt.datetime(2008, 1, 1),
+                            'podtec': dt.datetime(2008, 1, 1),
+                            'scnlv1': dt.datetime(2008, 1, 1)}
+               }
 _test_download = {'': {kk: True for kk in tags.keys()}}
 _password_req = {'': {kk: False for kk in tags.keys()}}
 
@@ -214,13 +229,14 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
-        format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
-                              '{day:03d}.{hour:02d}.{minute:02d}.G{cycle:02d}_',
-                              '{version:04d}.????_nc'))
-        # if tag == 'bfrprf':
-        #     # These files end with _bufr instead of _nc
-        #     format_str = format_str[:-2]
-        #     format_str = ''.join((format_str, 'bufr'))
+        if inst_id == '' or (tag == 'ionphs'):
+            format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
+                                  '{day:03d}.{hour:02d}.{minute:02d}.',
+                                  'G{cycle:02d}_{version:04d}.????_nc'))
+        elif inst_id == 'level_1b':
+            format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
+                                  '{day:03d}.{hour:02d}.{minute:02d}.',
+                                  '????.G{cycle:02d}.??_{version:04d}.????_nc'))
 
     # Process format string to get string to search for
     search_dict = futils.construct_searchstring_from_format(format_str)
@@ -311,6 +327,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         Object containing metadata such as column names and units
 
     """
+    global lower_l1_tags
 
     # input check
     if altitude_bin is not None:
@@ -328,13 +345,16 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         utsec = output.hour * 3600. + output.minute * 60. + output.second
         # FIXME: need to switch to xarray so unique time stamps not needed
         # make times unique by adding a unique amount of time less than a second
-        if tag != 'scnlv1':
+        if tag not in lower_l1_tags or (tag == 'ionphs'):
             # add 1E-6 seconds to time based upon occulting_inst_id
             # additional 1E-7 seconds added based upon cosmic ID
             # get cosmic satellite ID
             c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
             # time offset
-            utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
+            if tag != 'ionphs':
+                utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
+            else:
+                utsec += output.occsatId * 1.e-5 + c_id * 1.e-6
         else:
             # construct time out of three different parameters
             # duration must be less than 10,000
@@ -589,11 +609,18 @@ def download(date_array, tag, inst_id, data_path=None,
     the end user.
 
     """
-    global tags
-    if tag in tags:
-        sub_dir = ''.join((tag[0:3], 'Prf'))
-    else:
-        raise ValueError('Unknown cosmic_gps tag')
+    global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
+
+    if inst_id == '':
+        level_str = 'level_2'
+        matches = [utag for ltag, utag in zip(lower_l2_tags, l2_tags)
+                   if tag == ltag]
+        sub_str = matches[0]
+    elif inst_id == 'level_1b':
+        level_str = 'level1b'
+        matches = [utag for ltag, utag in zip(lower_l1_tags, l1_tags)
+                   if tag == ltag]
+        sub_str = matches[0]
 
     for date in date_array:
         logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
@@ -605,8 +632,8 @@ def download(date_array, tag, inst_id, data_path=None,
         try:
             # Construct path string for online file
             dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                             "/repro2013/level2/", yrdoystr, "/", sub_dir,
-                             '_repro2013',
+                             "/repro2013/", level_str, "/", yrdoystr, "/",
+                             sub_str, '_repro2013',
                              '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                    doy=doy)))
             # Make online connection
@@ -617,8 +644,8 @@ def download(date_array, tag, inst_id, data_path=None,
             try:
                 # Construct path string for online file
                 dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                                 "/postProc/level2/", yrdoystr, "/", sub_dir,
-                                 '_postProc',
+                                 "/postProc/", level_str, "/", yrdoystr, "/",
+                                 sub_str, '_postProc',
                                  '_{year:04d}_{doy:03d}.tar.gz'))
                 dwnld = dwnld.format(year=yr, doy=doy)
 
@@ -631,7 +658,7 @@ def download(date_array, tag, inst_id, data_path=None,
 
         # Copy request info to tarball file with generated name in `fname`.
         fname = os.path.join(data_path,
-                             ''.join(('cosmic_', sub_dir,
+                             ''.join(('cosmic_', sub_str,
                                       '_{year:04d}.{doy:03d}.tar')))
         fname = fname.format(year=yr, doy=doy)
         with open(fname, "wb") as local_file:
