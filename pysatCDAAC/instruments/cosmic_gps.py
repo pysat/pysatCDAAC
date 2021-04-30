@@ -71,7 +71,7 @@ tags = {'ionprf': 'Ionospheric Profiles',
         'atmprf': 'Atmospheric Profiles',
         'eraprf': '',
         'gfsprf': ''}
-for tag in l1_tags:
+for tag in lower_l1_tags:
     tags[tag] = ''
 
 inst_ids = {'': lower_l2_tags,
