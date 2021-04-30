@@ -85,10 +85,7 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
                     'eraprf': dt.datetime(2008, 1, 1),
                     'gfsprf': dt.datetime(2008, 1, 1)},
-               'level_1b': {'gpsbit': dt.datetime(2008, 1, 1),
-                            'ionphs': dt.datetime(2008, 1, 1),
-                            'leoc1k': dt.datetime(2008, 1, 1),
-                            'leoorb': dt.datetime(2008, 1, 1),
+               'level_1b': {'ionphs': dt.datetime(2008, 1, 1),
                             'podtec': dt.datetime(2008, 1, 1),
                             'scnlv1': dt.datetime(2008, 1, 1)}
                }
