@@ -609,7 +609,7 @@ def download(date_array, tag, inst_id, data_path=None,
     global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
 
     if inst_id == '':
-        level_str = 'level_2'
+        level_str = 'level2'
         matches = [utag for ltag, utag in zip(lower_l2_tags, l2_tags)
                    if tag == ltag]
         sub_str = matches[0]
