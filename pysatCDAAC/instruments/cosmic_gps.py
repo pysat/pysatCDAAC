@@ -87,6 +87,7 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
 # ----------------------------------------------------------------------------
 # Instrument methods
 
+
 def init(self):
     """Initializes the Instrument object with instrument specific values.
 
