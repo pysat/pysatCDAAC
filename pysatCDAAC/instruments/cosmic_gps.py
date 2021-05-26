@@ -20,20 +20,13 @@ name
     'gps' for Radio Occultation profiles
 tag
     Select profile type, or scintillation, one of:
-    {'ionprf', 'sonprf', 'wetprf', 'atmprf', 'scnlv1'}
+    ['ionprf', 'wetprf', 'atmprf', 'eraprf', 'gfsprf',
+    'ionphs', 'podtec', 'scnlv1']
 inst_id
     None supported
 altitude_bin
     Number of kilometers to bin altitude profiles by when loading.
     Currently only supported for tag='ionprf'.
-
-Note
-----
-- 'ionprf: 'ionPrf' ionosphere profiles
-- 'wetprf': 'wetPrf' files
-- 'atmprf': 'atmPrf' files
-- 'eraprf': 'eraPrf' files
-- 'gfsprf': 'gfsPrf' files
 
 Warnings
 --------
@@ -67,12 +60,13 @@ l2_tags = ['ionPrf', 'wetPrf', 'atmPrf', 'eraPrf', 'gfsPrf']
 lower_l2_tags = [tag.lower() for tag in l2_tags]
 
 tags = {'ionprf': 'Ionospheric Profiles',
-        'wetprf': '',
-        'atmprf': 'Atmospheric Profiles',
-        'eraprf': '',
-        'gfsprf': ''}
-for tag in lower_l1_tags:
-    tags[tag] = ''
+        'wetprf': 'Atmospheric profiles with moisture',
+        'atmprf': 'Atmospheric profiles without moisture',
+        'eraprf': 'ERA-40 Interim reanalysis data',
+        'gfsprf': 'NCEP operational analysis data',
+        'ionphs': 'Ionospheric excess phase',
+        'podtec': 'Absolute Total Electron Content and auxiliary data',
+        'sclnv1': 'S4 scintillation index and auxiliary data'}
 
 inst_ids = {'': lower_l2_tags,
             'level_1b': lower_l1_tags}
@@ -89,9 +83,6 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                             'podtec': dt.datetime(2008, 1, 1),
                             'scnlv1': dt.datetime(2008, 1, 1)}
                }
-_test_download = {'': {kk: True for kk in tags.keys()}}
-_password_req = {'': {kk: False for kk in tags.keys()}}
-
 
 # ----------------------------------------------------------------------------
 # Instrument methods
