@@ -31,14 +31,14 @@ altitude_bin
 Warnings
 --------
 - Routine was not produced by COSMIC team
-# - More recent versions of netCDF4 and numpy limit the casting of some variable
-#   types into others. This issue could prevent data loading for some variables
-#   such as 'MSL_Altitude' in the 'sonprf' and 'wetprf' files. The default
-#   UserWarning when this occurs is
-#   ::
-#
-#     'UserWarning: WARNING: missing_value not used since it cannot be safely
-#     cast to variable data type'
+- Files are labeled with times to the minute which can result in multiple
+  COSMIC data profiles at the same time. pysat requires that instruments have
+  monotonic and unique times. To meet Python requirements a time shift
+  (based upon file/data parameters) is added to each profile to ensure
+  all times are unique. This time shift is substantially less than the minute
+  spacing of the files themselves. For level-1b data files time shifts are
+  less than 0.2 seconds, for level-2 files the time shifts are less than
+  .0001 seconds.
 
 """
 
