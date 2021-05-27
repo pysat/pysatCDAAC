@@ -35,10 +35,10 @@ Warnings
   COSMIC data profiles at the same time. pysat requires that instruments have
   monotonic and unique times. To meet Python requirements a time shift
   (based upon file/data parameters) is added to each profile to ensure
-  all times are unique. This time shift is substantially less than the minute
-  spacing of the files themselves. For level-1b data files time shifts are
-  less than 0.2 seconds, for level-2 files the time shifts are less than
-  .0001 seconds.
+  all times are unique. For level-1b data files time shifts are
+  distributed throughout the minute, for level-2 files the time
+  shifts are less than .0001 seconds. Ordering of profiles within a minute
+  timeframe is not significant per the released data structure.
 
 """
 
@@ -381,6 +381,11 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             #   prn_id is allowed two characters
             #   antenna_id gets one character
             # prn_id and antenna_id alone are not sufficient for a unique time.
+            if np.nanmax(output.duration) > 1.e4:
+                estr = ''.join(('Assumptions for the time shift calculation ',
+                                'are not holding. Please contact pysatCDAAC ',
+                                'developers.'))
+                raise ValueError(estr)
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
 
