@@ -690,32 +690,31 @@ def download(date_array, tag, inst_id, data_path=None,
         yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
 
         # Try re-processed data (preferred)
-        with requests.auth.HTTPBasicAuth(user, password) as auth:
+        # Construct path string for online file
+        dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
+                         "/repro2013/", level_str, "/", yrdoystr, "/",
+                         sub_str, '_repro2013',
+                         '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
+                                                               doy=doy)))
+        try:
+            # Make online connection
+            with requests.get(dwnld) as req:
+                req.raise_for_status()
+        except requests.exceptions.HTTPError:
+            # If response is negative, try post-processed data
             # Construct path string for online file
             dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                             "/repro2013/", level_str, "/", yrdoystr, "/",
-                             sub_str, '_repro2013',
-                             '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
-                                                                   doy=doy)))
+                             "/postProc/", level_str, "/", yrdoystr, "/",
+                             sub_str, '_postProc',
+                             '_{year:04d}_{doy:03d}.tar.gz'))
+            dwnld = dwnld.format(year=yr, doy=doy)
             try:
                 # Make online connection
-                with requests.get(dwnld, auth=auth) as req:
+                with requests.get(dwnld) as req:
                     req.raise_for_status()
-            except requests.exceptions.HTTPError:
-                # If response is negative, try post-processed data
-                # Construct path string for online file
-                dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                                 "/postProc/", level_str, "/", yrdoystr, "/",
-                                 sub_str, '_postProc',
-                                 '_{year:04d}_{doy:03d}.tar.gz'))
-                dwnld = dwnld.format(year=yr, doy=doy)
-                try:
-                    # Make online connection
-                    with requests.get(dwnld, auth=auth) as req:
-                        req.raise_for_status()
-                except requests.exceptions.HTTPError as err:
-                    estr = ''.join((str(err), '\n', 'Data not found'))
-                    logger.info(estr)
+            except requests.exceptions.HTTPError as err:
+                estr = ''.join((str(err), '\n', 'Data not found'))
+                logger.info(estr)
 
         # Copy request info to tarball file with generated name in `fname`.
         fname = os.path.join(data_path,
