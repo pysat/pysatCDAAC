@@ -391,7 +391,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                                                    uts=utsec.values)
 
         # Rename index to time
-        if tag == 'scnlv1':
+        if tag in lower_l1_tags:
             # scnlv1 files already have a 2D time variable, it is a conflict
             output = output.rename(time='profile_time')
         output = output.rename(index='time')
