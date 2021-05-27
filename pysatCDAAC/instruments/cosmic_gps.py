@@ -358,22 +358,29 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
         # Create datetime index
         utsec = output.hour * 3600. + output.minute * 60. + output.second
+
+        # Not all profiles are unique within a minute sampling, thus
+        # we add a small time offset to ensure unique times. A more consistent
+        # offset time could be obtained by parsing the filenames as is done
+        # in list files however load isn't passed `format_str`, thus this
+        # solution wouldn't work in all cases.
         if tag not in lower_l1_tags or (tag == 'ionphs'):
-            # add 1E-6 seconds to time based upon occulting_inst_id
-            # additional 1E-7 seconds added based upon cosmic ID
-            # get cosmic satellite ID
-            c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
-            # time offset
+            # Add 1E-5 seconds to time based upon occulting_inst_id and an
+            # additional 1E-6 seconds added based upon cosmic ID.
+            # Get cosmic satellite ID
+            c_id = np.array([snip.values.tolist()[3]
+                             for snip in output.fileStamp]).astype(int)
+            # Time offset
             if tag != 'ionphs':
                 utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
             else:
                 utsec += output.occsatId * 1.e-5 + c_id * 1.e-6
         else:
-            # construct time out of three different parameters
-            # duration must be less than 10,000
-            # prn_id is allowed two characters
-            # antenna_id gets one
-            # prn_id and antenna_id are not sufficient for a unique time
+            # Construct time out of three different parameters:
+            #   duration must be less than 10,000
+            #   prn_id is allowed two characters
+            #   antenna_id gets one character
+            # prn_id and antenna_id alone are not sufficient for a unique time.
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
 
@@ -382,8 +389,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                                                    month=output.month.values,
                                                    day=output.day.values,
                                                    uts=utsec.values)
-        if not output['index'].is_unique:
-            raise ValueError('Datetimes returned by load_files not unique.')
 
         # Rename index to time
         if tag == 'scnlv1':
@@ -685,33 +690,32 @@ def download(date_array, tag, inst_id, data_path=None,
         yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
 
         # Try re-processed data (preferred)
-        auth = requests.auth.HTTPBasicAuth(user, password)
-        try:
+        with requests.auth.HTTPBasicAuth(user, password) as auth:
             # Construct path string for online file
             dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
                              "/repro2013/", level_str, "/", yrdoystr, "/",
                              sub_str, '_repro2013',
                              '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                    doy=doy)))
-            # Make online connection
-            req = requests.get(dwnld, auth=auth)
-            req.raise_for_status()
-        except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
             try:
+                # Make online connection
+                with requests.get(dwnld, auth=auth) as req:
+                    req.raise_for_status()
+            except requests.exceptions.HTTPError:
+                # If response is negative, try post-processed data
                 # Construct path string for online file
                 dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
                                  "/postProc/", level_str, "/", yrdoystr, "/",
                                  sub_str, '_postProc',
                                  '_{year:04d}_{doy:03d}.tar.gz'))
                 dwnld = dwnld.format(year=yr, doy=doy)
-
-                # Make online connection
-                req = requests.get(dwnld, auth=auth)
-                req.raise_for_status()
-            except requests.exceptions.HTTPError as err:
-                estr = ''.join((str(err), '\n', 'Data not found'))
-                logger.info(estr)
+                try:
+                    # Make online connection
+                    with requests.get(dwnld, auth=auth) as req:
+                        req.raise_for_status()
+                except requests.exceptions.HTTPError as err:
+                    estr = ''.join((str(err), '\n', 'Data not found'))
+                    logger.info(estr)
 
         # Copy request info to tarball file with generated name in `fname`.
         fname = os.path.join(data_path,
