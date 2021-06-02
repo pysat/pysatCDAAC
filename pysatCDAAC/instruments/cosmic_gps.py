@@ -379,11 +379,11 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 utsec += output.occsatId * 1.e-5 + c_id * 1.e-6
         else:
             # Construct time out of three different parameters:
-            #   duration must be less than 10,000
+            #   duration must be less than 100,000
             #   prn_id is allowed two characters
             #   antenna_id gets one character
             # prn_id and antenna_id alone are not sufficient for a unique time.
-            if np.nanmax(output.duration) > 1.e4:
+            if np.nanmax(output.duration) >= 1.e5:
                 estr = ''.join(('Assumptions for the time shift calculation ',
                                 'are not holding. Please contact pysatCDAAC ',
                                 'developers.'))
