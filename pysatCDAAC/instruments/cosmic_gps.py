@@ -31,14 +31,16 @@ altitude_bin
 Warnings
 --------
 - Routine was not produced by COSMIC team
-- Files are labeled with times to the minute which can result in multiple
+- Files are labeled with times at minute resolution which can result in multiple
   COSMIC data profiles at the same time. pysat requires that instruments have
-  monotonic and unique times. To meet Python requirements a time shift
+  monotonic and unique times, thus, to meet pysat requirements a time shift
   (based upon file/data parameters) is added to each profile to ensure
-  all times are unique. For level-1b data files time shifts are
-  distributed throughout the minute, for level-2 files the time
-  shifts are less than .0001 seconds. Ordering of profiles within a minute
-  timeframe is not significant per the released data structure.
+  all times are unique. This time shift within a minute
+  is not considered significant given the released data structure.
+  For level-1b data files time shifts are distributed throughout the minute,
+  for level-2 files the time shifts are less than .0001 seconds.
+  The difference in time distribution is related to the availability of a
+  unique combination of parameters at the different file levels.
 
 """
 
