@@ -72,7 +72,8 @@ class TestInstruments(InstTestClass):
                                           tag=inst_dict['tag'],
                                           inst_id=inst_dict['inst_id'],
                                           altitude_bin=5.)
-        date = inst_dict['inst_module'][inst_dict['inst_id']][inst_dict['tag']]
+        date = inst_dict['inst_module']._test_dates[inst_dict['inst_id']]
+        date = date[inst_dict['tag']]
         self.test_inst.load(date=date)
 
         # Confirm presence of binned altitudes
