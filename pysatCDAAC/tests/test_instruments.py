@@ -80,7 +80,7 @@ class TestInstruments(InstTestClass):
 
         # Confirm binned altitudes are even factors of binning
         rem = np.remainder(self.test_inst['MSL_bin_alt'].values, 5)
-        idx, idy,  = np.where(rem == 0)
+        idx, idy, = np.where(rem == 0)
         idx2, idy2, = np.where(np.isnan(rem))
         assert len(idx) + len(idx2) == np.product(rem.shape)
 
