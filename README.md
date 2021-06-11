@@ -1,5 +1,5 @@
 # pysatCDAAC: pysat support for COSMIC Data Analysis and Archive Center instruments
-[![Build Status](https://travis-ci.org/pysat/pysatCDAAC.svg?branch=main)](https://travis-ci.org/pysat/pysatCDAAC)
+[![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/pysat/pysatCDAAC/badge.svg?branch=main)](https://coveralls.io/github/pysat/pysatCDAAC?branch=main)
 [![DOI](https://zenodo.org/badge/287322558.svg)](https://zenodo.org/badge/latestdoi/287322558)
 
