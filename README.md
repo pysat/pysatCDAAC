@@ -3,6 +3,24 @@
 [![Coverage Status](https://coveralls.io/repos/github/pysat/pysatCDAAC/badge.svg?branch=main)](https://coveralls.io/github/pysat/pysatCDAAC?branch=main)
 [![DOI](https://zenodo.org/badge/287322558.svg)](https://zenodo.org/badge/latestdoi/287322558)
 
+### Prerequisites
+
+pysatCDAAC uses common Python modules, as well as modules developed by
+and for the Space Physics community.  This module officially supports
+Python 3.7+.
+
+| Common modules | Community modules |
+| -------------- | ----------------- |
+| beautifulsoup4 | pysat>=3.0.0      |
+| lxml           |                   |
+| netCDF4        |                   |
+| numpy          |                   |
+| pandas         |                   |
+| portalocker    |                   |
+| requests       |                   |
+| xarray         |                   |
+
+
 # Installation
 
 Currently, the main way to get pysatCDAAC is through github.
@@ -21,14 +39,8 @@ python setup.py install
 
 Note: pre-1.0.0 version
 ------------------
-pysatCDAAC is currently in an initial development phase.  Much of the API is being built off of the upcoming pysat 3.0.0 software in order to streamline the usage and test coverage.  This version of pysat is planned for release later this year.  Currently, you can access the develop version of this through github:
-```
-git clone https://github.com/pysat/pysat.git
-cd pysat
-git checkout develop-3
-python setup.py install
-```
-It should be noted that this is a working branch and is subject to change.
+pysatCDAAC is currently in an initial development phase and requires pysat 3.0.0+.
+
 
 # Using with pysat
 
