@@ -1,9 +1,9 @@
-netCDF4
-requests
 beautifulsoup4
 lxml
+netCDF4
 numpy
 pandas
-xarray
 portalocker
 pysat>=3.0.0
+requests
+xarray
