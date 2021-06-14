@@ -504,9 +504,9 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
         p_dict = {}
         # get indices needed to parse data
-        plengths = main_dict_len['OL_vec1']
-        max_p_length = np.max(plengths)
-        plengths, plengths2 = _process_lengths(plengths)
+        p_lens = main_dict_len['OL_vec1']
+        max_p_length = np.max(p_lens)
+        p_lens, p_lens2 = _process_lengths(p_lens)
         # collect data
         for key in p_keys:
             p_dict[key] = main_dict.pop(key)
@@ -521,9 +521,9 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
             q_keys = ['OL_ipar', 'OL_par']
         q_dict = {}
         # get indices needed to parse data
-        qlengths = main_dict_len['OL_par']
-        max_q_length = np.max(qlengths)
-        qlengths, qlengths2 = _process_lengths(qlengths)
+        q_lens = main_dict_len['OL_par']
+        max_q_length = np.max(q_lens)
+        q_lens, q_lens2 = _process_lengths(q_lens)
         # collect data
         for key in q_keys:
             q_dict[key] = main_dict.pop(key)
@@ -531,18 +531,14 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         qsub_frame = pds.DataFrame(q_dict)
 
         max_length = np.max([max_p_length, max_q_length])
-        length_arr = np.arange(max_length)
+        len_arr = np.arange(max_length)
 
         # Set small sub DataFrames
         for i in np.arange(len(output)):
-            output[i]['OL_vecs'] = psub_frame.iloc[
-                                   plengths[i]:plengths[i + 1], :]
-            output[i]['OL_vecs'].index = length_arr[
-                                         :plengths2[i + 1] - plengths2[i]]
-            output[i]['OL_pars'] = qsub_frame.iloc[
-                                   qlengths[i]:qlengths[i + 1], :]
-            output[i]['OL_pars'].index = length_arr[
-                                         :qlengths2[i + 1] - qlengths2[i]]
+            output[i]['OL_vecs'] = psub_frame.iloc[p_lens[i]:p_lens[i + 1], :]
+            output[i]['OL_vecs'].index = len_arr[:p_lens2[i + 1] - p_lens2[i]]
+            output[i]['OL_pars'] = qsub_frame.iloc[q_lens[i]:q_lens[i + 1], :]
+            output[i]['OL_pars'].index = len_arr[:q_lens2[i + 1] - q_lens2[i]]
 
     # create a single data frame with all bits, then
     # break into smaller frames using views
