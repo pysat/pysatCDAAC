@@ -26,8 +26,8 @@ your test configuration
 - Test B
 
 **Test Configuration**:
-* Operating system
-* Version number
+* Operating system: Hal
+* Version number: Python 3.X
 * Any details about your local setup that are relevant
 
 # Checklist:

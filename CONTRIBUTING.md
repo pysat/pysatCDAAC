@@ -1,8 +1,8 @@
 Contributing
 ============
 
-Bug reports, feature suggestions and other contributions are greatly
-appreciated!  Pysat is a community-driven project and welcomes both feedback and
+Bug reports, feature suggestions, and other contributions are greatly
+appreciated!  pysat is a community-driven project and welcomes both feedback and
 contributions.
 
 Short version
@@ -14,8 +14,7 @@ Short version
 Bug reports
 -----------
 
-When `reporting a bug <https://github.com/pysat/pysatCDAAC/issues>`_ please
-include:
+When reporting a bug please include:
 
 * Your operating system name and version
 * Any details about your local setup that might be helpful in troubleshooting
@@ -29,9 +28,9 @@ The best way to send feedback is to file an issue at
 
 If you are proposing a feature:
 
-* Explain in detail how it would work.
-* Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that code contributions
+* Explain in detail how it would work
+* Keep the scope as narrow as possible to make it easier to implement
+* Remember that this is a volunteer-driven project, and code contributions
   are welcome :)
 
 Development
@@ -48,14 +47,15 @@ To set up `pysatCDAAC` for local development:
 
     git checkout -b name-of-your-bugfix-or-feature
 
-   Now you can make your changes locally. Tests for new instruments are
-   performed automatically.  Tests for custom functions should be added to the
-   appropriately named file in ``pysatCDAAC/tests``.  For example, custom functions
-   for the OMNI HRO data are tested in ``pysatCDAAC/tests/test_omni_hro.py``.  If
-   no test file exists, then you should create one.  This testing uses pytest,
-   which will run tests on any python file in the test directory that starts
-   with ``test``.  Classes must begin with ``Test``, and methods must begin
-   with ``test`` as well.
+   Now you can make your changes locally.
+
+   Tests for new instruments are performed automatically.  Tests for custom
+   functions should be added to the appropriately named file in ``pysatCDAAC/tests``.
+   For example, custom functions for the COSMIC Radio Occultation Data are tested in
+   ``pysatCDAAC/tests/test_instruments.py``.  If no test file exists, then you should
+   create one.  This testing uses pytest, which will run tests on any python
+   file in the test directory that starts with ``test``.  Classes must begin
+   with ``Test``, and methods must begin with ``test`` as well.
 
 4. When you're done making changes, run all the checks to ensure that nothing
    is broken on your local system, as well as check for flake8 compliance::
@@ -85,11 +85,44 @@ For merging, you should:
 
 1. Include an example for use
 2. Add a note to ``CHANGELOG.md`` about the changes
-3. Ensure that all checks passed (current checks include Travis-CI (pytest and flake8)
+3. Ensure that all checks passed (current checks include Github Actions,
    and Coveralls) [1]_
 
 .. [1] If you don't have all the necessary Python versions available locally or
        have trouble building all the testing environments, you can rely on
-       Travis to run the tests for each change you add in the pull request.
-       Because testing here will delay tests by other developers, please ensure
-       that the code passes all tests on your local system first.
+       Github Actions to run the tests for each change you add in the pull
+       request. Because testing here will delay tests by other developers,
+       please ensure that the code passes all tests on your local system first.
+
+Project Style Guidelines
+------------------------
+
+In general, pysat follows PEP8 and numpydoc guidelines.  Pytest runs the unit
+and integration tests, flake8 checks for style, and sphinx-build performs
+documentation tests.  However, there are certain additional style elements that
+have been settled on to ensure the project maintains a consistent coding style.
+These include:
+
+* Line breaks should occur before a binary operator (ignoring flake8 W503)
+* Combine long strings using `join`
+* Preferably break long lines on open parentheses rather than using backslashes
+* Use no more than 80 characters per line
+* Avoid using Instrument class key attribute names as unrelated variable names:
+  `platform`, `name`, `tag`, and `inst_id`
+* The pysat logger is imported into each sub-module and provides status updates
+  at the info and warning levels (as appropriate)
+* Several dependent packages have common nicknames, including:
+  * `import datetime as dt`
+  * `import numpy as np`
+  * `import pandas as pds`
+  * `import xarray as xr`
+* When incrementing a timestamp, use `dt.timedelta` instead of `pds.DateOffset`
+  when possible to reduce program runtime
+* All classes should have `__repr__` and `__str__` functions
+* Docstrings use `Note` instead of `Notes`
+* Try to avoid creating a try/except statement where except passes
+* Use setup and teardown in test classes
+* Use pytest parametrize in test classes when appropriate
+* Use pysat testing utilities when appropriate
+* Provide testing class methods with informative failure statements and
+  descriptive, one-line docstrings
