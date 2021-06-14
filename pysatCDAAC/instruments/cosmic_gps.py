@@ -361,16 +361,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             utsec += output.antenna_id * 1.E-7
 
         # Create the Index
-        output.index = \
-            pysat.utils.time.create_datetime_index(year=output.year,
-                                                   month=output.month,
-                                                   day=output.day,
-                                                   uts=utsec)
+        output.index = pysat.utils.time.create_datetime_index(
+            year=output.year, month=output.month, day=output.day, uts=utsec)
         if not output.index.is_unique:
             raise ValueError('Datetimes returned by load_files not unique.')
-        # make sure UTS strictly increasing
+
+        # Ensure UTS strictly increasing
         output.sort_index(inplace=True)
-        # use the first available file to pick out meta information
+        # Use the first available file to pick out meta information
         profile_meta = pysat.Meta()
         meta = pysat.Meta()
         ind = 0
@@ -537,14 +535,14 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
 
         # Set small sub DataFrames
         for i in np.arange(len(output)):
-            output[i]['OL_vecs'] = \
-                psub_frame.iloc[plengths[i]:plengths[i + 1], :]
-            output[i]['OL_vecs'].index = \
-                length_arr[:plengths2[i + 1] - plengths2[i]]
-            output[i]['OL_pars'] = \
-                qsub_frame.iloc[qlengths[i]:qlengths[i + 1], :]
-            output[i]['OL_pars'].index = \
-                length_arr[:qlengths2[i + 1] - qlengths2[i]]
+            output[i]['OL_vecs'] = psub_frame.iloc[
+                                   plengths[i]:plengths[i + 1], :]
+            output[i]['OL_vecs'].index = length_arr[
+                                         :plengths2[i + 1] - plengths2[i]]
+            output[i]['OL_pars'] = qsub_frame.iloc[
+                                   qlengths[i]:qlengths[i + 1], :]
+            output[i]['OL_pars'].index = length_arr[
+                                         :qlengths2[i + 1] - qlengths2[i]]
 
     # create a single data frame with all bits, then
     # break into smaller frames using views
@@ -566,11 +564,10 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     if tag == 'ionprf':
         if altitude_bin is not None:
             for out in output:
-                rval = (out['profiles']['MSL_alt']
-                        / altitude_bin).round().values
-                out['profiles'].index = rval * altitude_bin
-                out['profiles'] = \
-                    out['profiles'].groupby(out['profiles'].index.values).mean()
+                rval = (out['profiles']['MSL_alt'] / altitude_bin).round()
+                out['profiles'].index = rval.values * altitude_bin
+                out['profiles'] = out['profiles'].groupby(
+                    out['profiles'].index.values).mean()
         else:
             for out in output:
                 out['profiles'].index = out['profiles']['MSL_alt']
