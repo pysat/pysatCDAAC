@@ -11,14 +11,10 @@ Python 3.7+.
 
 | Common modules | Community modules |
 | -------------- | ----------------- |
-| beautifulsoup4 | pysat>=3.0.0      |
-| lxml           |                   |
-| netCDF4        |                   |
+| netCDF4        | pysat>=3.0.0      |
 | numpy          |                   |
 | pandas         |                   |
-| portalocker    |                   |
 | requests       |                   |
-| xarray         |                   |
 
 
 # Installation
