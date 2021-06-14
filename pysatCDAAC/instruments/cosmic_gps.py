@@ -130,32 +130,34 @@ def clean(self):
 
     """
     if self.tag == 'ionprf':
-        # ionosphere density profiles
+        # Ionosphere density profiles
         if self.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # get max dens and max dens alt
+            # Try and make sure all data is good. Filter out profiles
+            # where source provider processing doesn't do so.
+            # Then get the max density and altitude of this max.
             self.data = self.data[((self['edmaxalt'] != -999.)
                                    & (self['edmax'] != -999.))]
-            # make sure edmaxalt in "reasonable" range
+
+            # Make sure edmaxalt is in a "reasonable" range
             self.data = self.data[((self['edmaxalt'] >= 175.)
                                    & (self['edmaxalt'] <= 475.))]
-            # filter densities when negative
+
+            # Remove negative densities
             for i, profile in enumerate(self['profiles']):
-                # take out all densities below the highest altitude negative
+                # Take out all densities below the highest altitude negative
                 # dens below 325
                 idx, = np.where((profile.ELEC_dens < 0)
                                 & (profile.index <= 325))
                 if len(idx) > 0:
                     profile.iloc[0:(idx[-1] + 1)] = np.nan
-                # take out all densities above the lowest altitude negative
+                # Take out all densities above the lowest altitude negative
                 # dens above 325
                 idx, = np.where((profile.ELEC_dens < 0)
                                 & (profile.index > 325))
                 if len(idx) > 0:
                     profile.iloc[idx[0]:] = np.nan
 
-                # do an altitude density gradient check to reduce number of
+                # Do an altitude density gradient check to reduce number of
                 # cycle slips
                 densDiff = profile.ELEC_dens.diff()
                 altDiff = profile.MSL_alt.diff()
@@ -167,15 +169,14 @@ def clean(self):
                     self[i, 'edmaxlat'] = np.nan
                     profile['ELEC_dens'] *= np.nan
 
-        # filter out any measurements where things have been set to NaN
+        # Filter out any measurements where things have been set to NaN
         self.data = self.data[self['edmaxalt'].notnull()]
 
     elif self.tag == 'scnlv1':
         # scintillation files
         if self.clean_level == 'clean':
-            # try and make sure all data is good
-            # filter out profiles where source provider processing doesn't
-            # work
+            # Make sure all data is good by filtering out profiles where
+            # the source provider processing doesn't work
             self.data = self.data[((self['alttp_s4max'] != -999.)
                                    & (self['s4max9sec'] != -999.))]
 
@@ -340,24 +341,26 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # FIXME: need to switch to xarray so unique time stamps not needed
         # make times unique by adding a unique amount of time less than a second
         if tag not in lower_l1_tags or (tag == 'ionphs'):
-            # add 1E-6 seconds to time based upon occulting_inst_id
-            # additional 1E-7 seconds added based upon cosmic ID
-            # get cosmic satellite ID
+            # Add 1E-6 seconds to time based upon `occulting_inst_id`.
+            # An additional 1E-7 seconds are added based upon the
+            # COSMIC sat ID. Start by getting the COSMIC sat ID.
             c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
-            # time offset
+
+            # Get the time offset
             if tag != 'ionphs':
                 utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
             else:
                 utsec += output.occsatId * 1.e-5 + c_id * 1.e-6
         else:
-            # construct time out of three different parameters
-            # duration must be less than 10,000
-            # prn_id is allowed two characters
-            # antenna_id gets one
-            # prn_id and antenna_id are not sufficient for a unique time
+            # Construct time out of three different parameters.
+            # The duration must be less than 10,000, the
+            # prn_id is allowed two characters, and the
+            # antenna_id gets one character.  The prn_id and
+            # antenna_id are not sufficient to define a unique time.
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
-        # move to Index
+
+        # Create the Index
         output.index = \
             pysat.utils.time.create_datetime_index(year=output.year,
                                                    month=output.month,
@@ -387,7 +390,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                             meta.labels.name: data.variables[key].long_name}
                 repeat = False
             except RuntimeError:
-                # file was empty, try the next one by incrementing ind
+                # File was empty, try the next one by incrementing ind
                 ind += 1
 
         meta['profiles'] = profile_meta
@@ -531,7 +534,8 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
 
         max_length = np.max([max_p_length, max_q_length])
         length_arr = np.arange(max_length)
-        # small sub DataFrames
+
+        # Set small sub DataFrames
         for i in np.arange(len(output)):
             output[i]['OL_vecs'] = \
                 psub_frame.iloc[plengths[i]:plengths[i + 1], :]
@@ -553,7 +557,8 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     length_arr = np.arange(max_length)
     # process lengths for ease of parsing
     lengths, lengths2 = _process_lengths(lengths)
-    # break main profile data into each individual profile
+
+    # Break the main profile data into individual profiles
     for i in np.arange(len(output)):
         output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i + 1], :]
         output[i]['profiles'].index = length_arr[:lengths2[i + 1] - lengths2[i]]
