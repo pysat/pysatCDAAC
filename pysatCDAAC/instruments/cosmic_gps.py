@@ -19,9 +19,15 @@ platform
 name
     'gps' for Radio Occultation profiles
 tag
-    Select profile type, or scintillation, one of:
-    ['ionprf', 'wetprf', 'atmprf', 'eraprf', 'gfsprf',
-    'ionphs', 'podtec', 'scnlv1']
+    Select profile type, or scintillation, using one of the following keys:
+       {'ionprf': 'Ionospheric Profiles',
+        'wetprf': 'Atmospheric profiles with moisture',
+        'atmprf': 'Atmospheric profiles without moisture',
+        'eraprf': 'ERA-40 Interim reanalysis data',
+        'gfsprf': 'NCEP operational analysis data',
+        'ionphs': 'Ionospheric excess phase',
+        'podtec': 'Absolute Total Electron Content and auxiliary data',
+        'sclnv1': 'S4 scintillation index and auxiliary data'}
 inst_id
     None supported
 altitude_bin
@@ -68,8 +74,7 @@ tags = {'ionprf': 'Ionospheric Profiles',
         'podtec': 'Absolute Total Electron Content and auxiliary data',
         'sclnv1': 'S4 scintillation index and auxiliary data'}
 
-inst_ids = {'': lower_l2_tags,
-            'level_1b': lower_l1_tags}
+inst_ids = {'': tags.keys()}
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
@@ -218,11 +223,11 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
-        if inst_id == '' or (tag == 'ionphs'):
+        if tag in lower_l2_tags or (tag == 'ionphs'):
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   'G{cycle:02d}_{version:04d}.????_nc'))
-        elif inst_id == 'level_1b':
+        elif tag in lower_l1_tags:
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   '????.G{cycle:02d}.??_{version:04d}.????_nc'))
@@ -600,12 +605,12 @@ def download(date_array, tag, inst_id, data_path=None,
     """
     global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
 
-    if inst_id == '':
+    if tag in lower_l1_tags:
         level_str = 'level2'
         matches = [utag for ltag, utag in zip(lower_l2_tags, l2_tags)
                    if tag == ltag]
         sub_str = matches[0]
-    elif inst_id == 'level_1b':
+    elif tag in lower_l2_tags:
         level_str = 'level1b'
         matches = [utag for ltag, utag in zip(lower_l1_tags, l1_tags)
                    if tag == ltag]
