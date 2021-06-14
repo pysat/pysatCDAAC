@@ -27,7 +27,7 @@ tag
         'gfsprf': 'NCEP operational analysis data',
         'ionphs': 'Ionospheric excess phase',
         'podtec': 'Absolute Total Electron Content and auxiliary data',
-        'sclnv1': 'S4 scintillation index and auxiliary data'}
+        'scnlv1': 'S4 scintillation index and auxiliary data'}
 inst_id
     None supported
 altitude_bin
@@ -72,7 +72,7 @@ tags = {'ionprf': 'Ionospheric Profiles',
         'gfsprf': 'NCEP operational analysis data',
         'ionphs': 'Ionospheric excess phase',
         'podtec': 'Absolute Total Electron Content and auxiliary data',
-        'sclnv1': 'S4 scintillation index and auxiliary data'}
+        'scnlv1': 'S4 scintillation index and auxiliary data'}
 
 inst_ids = {'': tags.keys()}
 
