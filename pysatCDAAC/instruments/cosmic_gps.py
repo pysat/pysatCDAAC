@@ -20,14 +20,14 @@ name
     'gps' for Radio Occultation profiles
 tag
     Select profile type, or scintillation, using one of the following keys:
-      {'ionprf': 'Ionospheric Profiles',
-       'wetprf': 'Atmospheric profiles with moisture',
-       'atmprf': 'Atmospheric profiles without moisture',
-       'eraprf': 'ERA-40 Interim reanalysis data',
-       'gfsprf': 'NCEP operational analysis data',
-       'ionphs': 'Ionospheric excess phase',
-       'podtec': 'Absolute Total Electron Content and auxiliary data',
-       'sclnv1': 'S4 scintillation index and auxiliary data'}
+    {'ionprf': 'Ionospheric Profiles',
+    'wetprf': 'Atmospheric profiles with moisture',
+    'atmprf': 'Atmospheric profiles without moisture',
+    'eraprf': 'ERA-40 Interim reanalysis data',
+    'gfsprf': 'NCEP operational analysis data',
+    'ionphs': 'Ionospheric excess phase',
+    'podtec': 'Absolute Total Electron Content and auxiliary data',
+    'scnlv1': 'S4 scintillation index and auxiliary data'}
 inst_id
     None supported
 altitude_bin
@@ -83,9 +83,9 @@ tags = {'ionprf': 'Ionospheric Profiles',
         'gfsprf': 'NCEP operational analysis data',
         'ionphs': 'Ionospheric excess phase',
         'podtec': 'Absolute Total Electron Content and auxiliary data',
-        'sclnv1': 'S4 scintillation index and auxiliary data'}
+        'scnlv1': 'S4 scintillation index and auxiliary data'}
 
-inst_ids = {'': tags.keys()}
+inst_ids = {'': list(tags.keys())}
 
 pandas_format = False
 
@@ -96,11 +96,10 @@ _test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
                     'wetprf': dt.datetime(2008, 1, 1),
                     'atmprf': dt.datetime(2008, 1, 1),
                     'eraprf': dt.datetime(2008, 1, 1),
-                    'gfsprf': dt.datetime(2008, 1, 1)},
-               'level_1b': {'ionphs': dt.datetime(2008, 1, 1),
-                            'podtec': dt.datetime(2008, 1, 1),
-                            'scnlv1': dt.datetime(2008, 1, 1)}
-               }
+                    'gfsprf': dt.datetime(2008, 1, 1),
+                    'ionphs': dt.datetime(2008, 1, 1),
+                    'podtec': dt.datetime(2008, 1, 1),
+                    'scnlv1': dt.datetime(2008, 1, 1)}}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
