@@ -74,7 +74,7 @@ tags = {'ionprf': 'Ionospheric Profiles',
         'podtec': 'Absolute Total Electron Content and auxiliary data',
         'scnlv1': 'S4 scintillation index and auxiliary data'}
 
-inst_ids = {'': tags.keys()}
+inst_ids = {'': list(tags.keys())}
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
