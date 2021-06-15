@@ -612,7 +612,6 @@ def download(date_array, tag, inst_id, data_path=None,
         yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
 
         # Try re-processed data (preferred)
-        auth = requests.auth.HTTPBasicAuth(user, password)
         try:
             # Construct path string for online file
             dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
@@ -621,7 +620,7 @@ def download(date_array, tag, inst_id, data_path=None,
                              '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                    doy=doy)))
             # Make online connection
-            req = requests.get(dwnld, auth=auth)
+            req = requests.get(dwnld)
             req.raise_for_status()
         except requests.exceptions.HTTPError:
             # If response is negative, try post-processed data
@@ -634,7 +633,7 @@ def download(date_array, tag, inst_id, data_path=None,
                 dwnld = dwnld.format(year=yr, doy=doy)
 
                 # Make online connection
-                req = requests.get(dwnld, auth=auth)
+                req = requests.get(dwnld)
                 req.raise_for_status()
             except requests.exceptions.HTTPError as err:
                 estr = ''.join((str(err), '\n', 'Data not found'))
