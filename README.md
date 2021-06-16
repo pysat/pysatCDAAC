@@ -1,3 +1,8 @@
+<div align="center">
+        <img height="0" width="0px">
+        <img width="20%" src="/logo.png" alt="pysat" title="pysatCDAAC"</img>
+</div>
+
 # pysatCDAAC: pysat support for COSMIC Data Analysis and Archive Center instruments
 [![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/pysat/pysatCDAAC/badge.svg?branch=main)](https://coveralls.io/github/pysat/pysatCDAAC?branch=main)
