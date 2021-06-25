@@ -46,6 +46,7 @@ jobs:
         flake8 . --count --select=E,F,W --show-source --statistics
 
     - name: Evaluate complexity
+      run: |
         # `exit-zero` treats all errors as warnings. Returns a complexity report
         flake8 . --count --exit-zero --max-complexity=10 --statistics
 
