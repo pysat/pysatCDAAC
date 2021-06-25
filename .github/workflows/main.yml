@@ -39,6 +39,11 @@ jobs:
         pip install -r pysat_requirements.txt
         pip install -i https://test.pypi.org/simple/ pysat==3.0.1rc1
 
+    - name: Install NEP29 dependencies
+      if: ${{ matrix.numpy_ver != 'latest'}}
+      run: |
+        pip install --no-binary :numpy: numpy==${{ matrix.numpy_ver }}
+
     - name: Set up pysat
       run: |
         mkdir pysatData
