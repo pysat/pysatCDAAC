@@ -37,8 +37,8 @@ jobs:
         fi
 
        # Temporary install commands to test RC
-         pip install -r pysat_requirements.txt
-         pip install -i https://test.pypi.org/simple/ pysat==3.0.1rc1
+        pip install -r pysat_requirements.txt
+        pip install -i https://test.pypi.org/simple/ pysat==3.0.1rc1
 
     - name: Set up pysat
       run: |
