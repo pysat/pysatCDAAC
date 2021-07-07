@@ -188,7 +188,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     tag : string or NoneType
         Denotes type of file to load.
         (default=None)
-    inst_id : string or NoneType
+    inst_id : str or NoneType
         Specifies the satellite ID for a constellation.  Not used.
         (default=None)
     data_path : string or NoneType
@@ -422,7 +422,7 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int
         Number of kilometers to bin altitude profiles by when loading.
         Currently only supported for tag='ionprf'.
 
