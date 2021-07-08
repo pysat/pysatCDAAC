@@ -185,13 +185,13 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
     Parameters
     ----------
-    tag : string or NoneType
+    tag : str or NoneType
         Denotes type of file to load.
         (default=None)
-    inst_id : string or NoneType
+    inst_id : str or NoneType
         Specifies the satellite ID for a constellation.  Not used.
         (default=None)
-    data_path : string or NoneType
+    data_path : str or NoneType
         Path to data directory.  If None is specified, the value previously
         set in Instrument.files.data_path is used.  (default=None)
     format_str : NoneType
@@ -422,7 +422,7 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int
         Number of kilometers to bin altitude profiles by when loading.
         Currently only supported for tag='ionprf'.
 
@@ -572,19 +572,19 @@ def download(date_array, tag, inst_id, data_path=None,
     date_array : array-like
         list of datetimes to download data for. The sequence of dates need not
         be contiguous.
-    tag : string
+    tag : str
         Tag identifier used for particular dataset. This input is provided by
         pysat. (default='')
-    inst_id : string
+    inst_id : str
         Instrument ID string identifier used for particular dataset. This input
         is provided by pysat. (default='')
-    data_path : string
+    data_path : str
         Path to directory to download data to. (default=None)
-    user : string or NoneType
+    user : str or NoneType
         User string input used for download. Provided by user and passed via
         pysat. If an account is required for downloads this routine here must
         error if user not supplied. (default=None)
-    password : string or NoneType
+    password : str or NoneType
         Password for data download. (default=None)
 
     Note
