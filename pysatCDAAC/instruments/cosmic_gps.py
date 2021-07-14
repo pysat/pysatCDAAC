@@ -92,14 +92,7 @@ pandas_format = False
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {'': {'ionprf': dt.datetime(2008, 1, 1),
-                    'wetprf': dt.datetime(2008, 1, 1),
-                    'atmprf': dt.datetime(2008, 1, 1),
-                    'eraprf': dt.datetime(2008, 1, 1),
-                    'gfsprf': dt.datetime(2008, 1, 1),
-                    'ionphs': dt.datetime(2008, 1, 1),
-                    'podtec': dt.datetime(2008, 1, 1),
-                    'scnlv1': dt.datetime(2008, 1, 1)}}
+_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2008, 1, 1))}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
@@ -203,13 +196,13 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
 
     Parameters
     ----------
-    tag : string or NoneType
+    tag : str or NoneType
         Denotes type of file to load.
         (default=None)
-    inst_id : string or NoneType
+    inst_id : str or NoneType
         Specifies the satellite ID for a constellation.  Not used.
         (default=None)
-    data_path : string or NoneType
+    data_path : str or NoneType
         Path to data directory.  If None is specified, the value previously
         set in Instrument.files.data_path is used.  (default=None)
     format_str : NoneType
@@ -649,6 +642,7 @@ def load_files(files, tag=None, inst_id=None, coords=None):
             coords[key] = 'RO'
         output[key] = (['index', coords[key]], main_dict[key])
 
+
     return output
 
 
@@ -661,19 +655,19 @@ def download(date_array, tag, inst_id, data_path=None,
     date_array : array-like
         list of datetimes to download data for. The sequence of dates need not
         be contiguous.
-    tag : string
+    tag : str
         Tag identifier used for particular dataset. This input is provided by
         pysat. (default='')
-    inst_id : string
+    inst_id : str
         Instrument ID string identifier used for particular dataset. This input
         is provided by pysat. (default='')
-    data_path : string
+    data_path : str
         Path to directory to download data to. (default=None)
-    user : string or NoneType
+    user : str or NoneType
         User string input used for download. Provided by user and passed via
         pysat. If an account is required for downloads this routine here must
         error if user not supplied. (default=None)
-    password : string or NoneType
+    password : str or NoneType
         Password for data download. (default=None)
 
     Note
