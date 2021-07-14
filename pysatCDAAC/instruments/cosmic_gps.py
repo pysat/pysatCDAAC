@@ -642,7 +642,6 @@ def load_files(files, tag=None, inst_id=None, coords=None):
             coords[key] = 'RO'
         output[key] = (['index', coords[key]], main_dict[key])
 
-
     return output
 
 
