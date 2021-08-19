@@ -146,7 +146,7 @@ def clean(self):
                                         & (self['edmaxalt'] <= 475.)),
                                         drop=True)
 
-            # Filter densities when negative
+            # Filter densities when negative.
             dens_copy = self['ELEC_dens'].values
             for i, profile in enumerate(self['time']):
                 # Take out all densities below any altitude (< 325) with
@@ -366,7 +366,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         if tag not in lower_l1_tags or (tag == 'ionphs'):
             # Add 1E-5 seconds to time based upon occulting_inst_id and an
             # additional 1E-6 seconds added based upon cosmic ID.
-            # Get cosmic satellite ID
+            # Get cosmic satellite ID.
             c_id = np.array([snip.values.tolist()[3]
                              for snip in output.fileStamp]).astype(int)
             # Time offset
@@ -394,13 +394,13 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                                                    day=output.day.values,
                                                    uts=utsec.values)
 
-        # Rename index to time
+        # Rename index to time.
         if tag in lower_l1_tags:
-            # scnlv1 files already have a 2D time variable, it is a conflict
+            # scnlv1 files already have a 2D time variable, it is a conflict.
             output = output.rename(time='profile_time')
         output = output.rename(index='time')
 
-        # Ensure time is increasing
+        # Ensure time is increasing.
         output = output.sortby('time')
 
         if tag == 'ionprf':
@@ -487,19 +487,19 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
         elif tag == 'sonprf':
-            # Set up coordinates
+            # Set up coordinates.
             coord_labels = ['MSL_alt', 'lat', 'lon']
 
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
         elif tag == 'wetprf':
-            # Set up coordinates
+            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
 
             # Apply coordinates to loaded data.
             output = output.set_coords(coord_labels)
         elif tag == 'scnlv1':
-            # Set up coordinates
+            # Set up coordinates.
             coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
 
             # Apply coordinates to loaded data.
@@ -529,13 +529,13 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
         return output, meta
     else:
-        # No data
+        # No data.
         return xr.Dataset(None), pysat.Meta()
 
 
 # Separate routine for doing actual loading. This was broken off from main load
 # because I was playing around with multiprocessor loading.
-# Yielded about 20% improvement in execution time
+# Yielded about 20% improvement in execution time.
 def load_files(files, tag=None, inst_id=None, coords=None):
     """Load COSMIC data files directly from a given list.
 
@@ -693,7 +693,7 @@ def download(date_array, tag, inst_id, data_path=None,
         yr, doy = pysat.utils.time.getyrdoy(date)
         yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
 
-        # Try re-processed data (preferred)
+        # Try re-processed data (preferred).
         # Construct path string for online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
                          "/repro2013/", level_str, "/", yrdoystr, "/",
@@ -701,7 +701,7 @@ def download(date_array, tag, inst_id, data_path=None,
                          '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                doy=doy)))
         try:
-            # Make online connection
+            # Make online connection.
             with requests.get(dwnld) as req:
                 req.raise_for_status()
         except requests.exceptions.HTTPError:

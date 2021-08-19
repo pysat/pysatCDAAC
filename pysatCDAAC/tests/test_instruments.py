@@ -76,10 +76,10 @@ class TestInstruments(InstTestClass):
         date = date[inst_dict['tag']]
         self.test_inst.load(date=date)
 
-        # Confirm presence of binned altitudes
+        # Confirm presence of binned altitudes.
         assert 'MSL_bin_alt' in self.test_inst.data
 
-        # Confirm binned altitudes are even factors of binning
+        # Confirm binned altitudes are even factors of binning.
         rem = np.remainder(self.test_inst['MSL_bin_alt'].values, 5)
         idx, idy, = np.where(rem == 0)
         idx2, idy2, = np.where(np.isnan(rem))
