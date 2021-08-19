@@ -62,7 +62,7 @@ class TestInstruments(InstTestClass):
 
     @pytest.mark.parametrize("inst_dict", [x for x in instruments['download']])
     def test_altitude_bin_keyword(self, inst_dict):
-        """Test altitude bin keyword"""
+        """Test altitude bin keyword."""
 
         if inst_dict['tag'] != 'ionprf':
             assert True

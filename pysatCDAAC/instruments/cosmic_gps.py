@@ -141,7 +141,7 @@ def clean(self):
             self.data = self.data.where(self['edmaxalt'] != -999., drop=True)
             self.data = self.data.where(self['edmax'] != -999., drop=True)
 
-            # Ensure 'edmaxalt' in "reasonable" range
+            # Ensure 'edmaxalt' in "reasonable" range.
             self.data = self.data.where(((self['edmaxalt'] >= 175.)
                                         & (self['edmaxalt'] <= 475.)),
                                         drop=True)
@@ -170,7 +170,7 @@ def clean(self):
             altDiff = self['MSL_alt'].diff(dim='RO')
             normGrad = (densDiff / (altDiff * self[:, :-1, 'ELEC_dens']))
 
-            # Calculate maximum gradient per profile
+            # Calculate maximum gradient per profile.
             normGrad = normGrad.max(dim='RO')
 
             # Remove profiles with high altitude gradients
@@ -327,14 +327,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
     """
     global lower_l1_tags
 
-    # Input check
+    # Input check.
     if altitude_bin is not None:
         if tag != 'ionprf':
             estr = 'altitude_bin keyword only supported for "tag=ionprf"'
             raise ValueError(estr)
 
     num = len(fnames)
-    # Make sure there are files to read
+    # Make sure there are files to read.
     if num != 0:
 
         # Set up loading files with a mixture of data lengths.
@@ -352,10 +352,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         else:
             coords = {}
 
-        # Call generalized load_files routine
+        # Call generalized load_files routine.
         output = load_files(fnames, tag=tag, inst_id=inst_id, coords=coords)
 
-        # Create datetime index
+        # Create datetime index.
         utsec = output.hour * 3600. + output.minute * 60. + output.second
 
         # Not all profiles are unique within a minute sampling, thus
@@ -404,7 +404,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         output = output.sortby('time')
 
         if tag == 'ionprf':
-            # Set up coordinates
+            # Set up coordinates.
             coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
             var_labels = ['ELEC_dens', 'TEC_cal']
 
@@ -420,10 +420,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 all_labels.extend(coord_labels)
                 all_labels.extend(var_labels)
 
-                # Normalize and round actual altitude values by altitude_bin
+                # Normalize and round actual altitude values by altitude_bin.
                 bin_alts = (output['MSL_alt'] / altitude_bin).round().values
 
-                # Reconstruct altitude from bin_alts value
+                # Reconstruct altitude from bin_alts value.
                 alts = bin_alts * altitude_bin
 
                 # Create array for bounds of each bin that data will be
@@ -433,7 +433,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 # Indexing information mapping which altitude goes to which bin
                 dig_bins = np.digitize(bin_alts, bin_arr)
 
-                # Create arrays to store results
+                # Create arrays to store results.
                 new_coords = {}
                 for label in all_labels:
                     new_coords[label] = np.full(
@@ -466,22 +466,22 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                     coords[key] = (('time', 'RO'), new_coords[key])
                 coords['time'] = output['time']
 
-                # Create data_vars input dict
+                # Create data_vars input dict.
                 for key in var_labels:
                     data_vars[key] = (('time', 'RO'), new_coords[key])
 
-                # Create new Dataset
+                # Create new Dataset.
                 new_set = xr.Dataset(data_vars=data_vars, coords=coords)
 
-                # Copy over other variables
+                # Copy over other variables.
                 for key in output.data_vars:
                     if key not in all_labels:
                         new_set[key] = output[key]
 
-                # Replace initial Dataset
+                # Replace initial Dataset.
                 output = new_set
         elif tag == 'atmprf':
-            # Set up coordinates
+            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
 
             # Apply coordinates to loaded data.
@@ -573,13 +573,13 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     main_dict = {}
     main_dict_len = {}
 
-    # List of all data variables in the file
+    # List of all data variables in the file.
     data_var_keys = []
 
     # Iterate through files and load data
     for (i, fname) in enumerate(files):
         try:
-            # Open file for access
+            # Open file for access.
             data = netCDF4.Dataset(fname)
 
             # Get list of file attributes, which includes information about
@@ -589,25 +589,25 @@ def load_files(files, tag=None, inst_id=None, coords=None):
             for d in ncattrsList:
                 file_attrs[d] = data.getncattr(d)
 
-            # Get a list of all data variables from the first file only
+            # Get a list of all data variables from the first file only.
             if i == 0:
                 for key in data.variables.keys():
                     data_var_keys.append(key)
                     main_dict[key] = []
                     main_dict_len[key] = []
 
-            # Load all of the variables in the netCDF
+            # Load all of the variables in the netCDF.
             for key in data_var_keys:
-                # Grab data
+                # Grab data.
                 t_list = data.variables[key][:]
 
-                # Reverse byte order if needed and store
+                # Reverse byte order if needed and store.
                 if t_list.dtype.byteorder != '=':
                     main_dict[key].append(t_list.byteswap().newbyteorder())
                 else:
                     main_dict[key].append(t_list)
 
-                # Store length of data for the file
+                # Store length of data for the file.
                 main_dict_len[key].append(len(main_dict[key][-1]))
 
             output[i] = file_attrs
@@ -618,7 +618,7 @@ def load_files(files, tag=None, inst_id=None, coords=None):
             # Store the index of these zero byte files so they can be dropped.
             drop_idx.append(i)
 
-    # Drop anything that came from the zero byte files
+    # Drop anything that came from the zero byte files.
     drop_idx.reverse()
     for i in drop_idx:
         del output[i]
@@ -635,7 +635,7 @@ def load_files(files, tag=None, inst_id=None, coords=None):
 
         main_dict[key] = data_arr
 
-    # Collect all simple variable output into a Dataset
+    # Collect all simple variable output into a Dataset.
     output = pds.DataFrame(output).to_xarray()
     for key in main_dict:
         if key not in coords:
@@ -694,7 +694,7 @@ def download(date_array, tag, inst_id, data_path=None,
         yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
 
         # Try re-processed data (preferred)
-        # Construct path string for online file
+        # Construct path string for online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
                          "/repro2013/", level_str, "/", yrdoystr, "/",
                          sub_str, '_repro2013',
