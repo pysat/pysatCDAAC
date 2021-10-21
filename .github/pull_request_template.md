@@ -26,13 +26,13 @@ your test configuration
 - Test B
 
 **Test Configuration**:
-* Operating system
-* Version number
+* Operating system: Hal
+* Version number: Python 3.X
 * Any details about your local setup that are relevant
 
 # Checklist:
 
-- [ ] Make sure you are merging into the ``develop`` (not ``master``) branch
+- [ ] Make sure you are merging into the ``develop`` (not ``main``) branch
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
