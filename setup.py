@@ -3,7 +3,7 @@
 # Copyright (C) 2020, Authors
 # Full license can be found in License.md and AUTHORS.md
 # -----------------------------------------------------------------------------
-"""Setup routines for pysatNASA.
+"""Setup routines for pysatCDAAC.
 
 Note
 ----

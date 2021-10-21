@@ -10,7 +10,7 @@ import pysat
 
 def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
              data_path=None, user=None, password=None):
-    """Download COSMIC GPS data.
+    """Download data from CDAAC https server.
 
     Parameters
     ----------
