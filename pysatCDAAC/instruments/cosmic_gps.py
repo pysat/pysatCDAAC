@@ -51,17 +51,16 @@ Warnings
 """
 
 import datetime as dt
-import os
-import requests
-import tarfile
+import functools
 
-import numpy as np
 import netCDF4
+import numpy as np
 import pandas as pds
-import pysat
-from pysat import logger
-from pysat.utils import files as futils
 import xarray as xr
+
+import pysat
+from pysat.utils import files as futils
+from pysatCDAAC.instruments.methods import general as gen_meth
 
 
 # ----------------------------------------------------------------------------
@@ -69,12 +68,6 @@ import xarray as xr
 
 platform = 'cosmic'
 name = 'gps'
-
-l1_tags = ['ionPhs', 'podTec', 'scnLv1']
-lower_l1_tags = [tag.lower() for tag in l1_tags]
-
-l2_tags = ['ionPrf', 'wetPrf', 'atmPrf', 'eraPrf', 'gfsPrf']
-lower_l2_tags = [tag.lower() for tag in l2_tags]
 
 tags = {'ionprf': 'Ionospheric Profiles',
         'wetprf': 'Atmospheric profiles with moisture',
@@ -89,6 +82,15 @@ inst_ids = {'': list(tags.keys())}
 
 pandas_format = False
 
+# Translate tags to levels and camelcase names
+tag_translation = {'ionprf': {'level': 'level2', 'substr': 'ionPrf'},
+                   'wetprf': {'level': 'level2', 'substr': 'wetPrf'},
+                   'atmprf': {'level': 'level2', 'substr': 'atmPrf'},
+                   'eraprf': {'level': 'level2', 'substr': 'eraPrf'},
+                   'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'},
+                   'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
+                   'podtec': {'level': 'level1b', 'substr': 'podTec'},
+                   'scnlv1': {'level': 'level1b', 'substr': 'scnLv1'}}
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
@@ -99,8 +101,10 @@ _test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2008, 1, 1))}
 
 
 def init(self):
-    """Initializes the Instrument object with instrument specific values.
+    """Initialize the Instrument object with instrument specific values.
 
+    Note
+    ----
     Runs once upon instantiation.
 
     """
@@ -115,7 +119,7 @@ def init(self):
                      'https://cdaac-www.cosmic.ucar.edu/cdaac/doc/cosmic.html'))
     self.acknowledgements = ack
     self.references = refs
-    logger.info(ack)
+    pysat.logger.info(ack)
 
     return
 
@@ -216,7 +220,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     """
 
     estr = 'Building a list of COSMIC files, which can possibly take time. '
-    logger.info('{:s}~1s per 100K files'.format(estr))
+    pysat.logger.info('{:s}~1s per 100K files'.format(estr))
 
     # Note that Files.from_os() could be used here except for the fact
     # that there are multiple COSMIC files per given time.
@@ -227,11 +231,11 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
-        if tag in lower_l2_tags or (tag == 'ionphs'):
+        if tag_translation[tag]['level'] == 'level2' or (tag == 'ionphs'):
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   'G{cycle:02d}_{version:04d}.????_nc'))
-        elif tag in lower_l1_tags:
+        elif tag_translation[tag]['level'] == 'level1b':
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   '????.G{cycle:02d}.??_{version:04d}.????_nc'))
@@ -645,100 +649,4 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
-def download(date_array, tag, inst_id, data_path=None,
-             user=None, password=None):
-    """Download COSMIC GPS data.
-
-    Parameters
-    ----------
-    date_array : array-like
-        list of datetimes to download data for. The sequence of dates need not
-        be contiguous.
-    tag : str
-        Tag identifier used for particular dataset. This input is provided by
-        pysat. (default='')
-    inst_id : str
-        Instrument ID string identifier used for particular dataset. This input
-        is provided by pysat. (default='')
-    data_path : str
-        Path to directory to download data to. (default=None)
-    user : str or NoneType
-        User string input used for download. Provided by user and passed via
-        pysat. If an account is required for downloads this routine here must
-        error if user not supplied. (default=None)
-    password : str or NoneType
-        Password for data download. (default=None)
-
-    Note
-    ----
-    This routine is invoked by pysat and is not intended for direct use by
-    the end user.
-
-    """
-    global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
-
-    if tag in lower_l2_tags:
-        level_str = 'level2'
-        matches = [utag for ltag, utag in zip(lower_l2_tags, l2_tags)
-                   if tag == ltag]
-        sub_str = matches[0]
-    elif tag in lower_l1_tags:
-        level_str = 'level1b'
-        matches = [utag for ltag, utag in zip(lower_l1_tags, l1_tags)
-                   if tag == ltag]
-        sub_str = matches[0]
-
-    for date in date_array:
-        logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
-
-        # Try re-processed data (preferred).
-        # Construct path string for online file.
-        dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                         "/repro2013/", level_str, "/", yrdoystr, "/",
-                         sub_str, '_repro2013',
-                         '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
-                                                               doy=doy)))
-        try:
-            # Make online connection.
-            with requests.get(dwnld) as req:
-                req.raise_for_status()
-        except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
-            # Construct path string for online file
-            dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                             "/postProc/", level_str, "/", yrdoystr, "/",
-                             sub_str, '_postProc',
-                             '_{year:04d}_{doy:03d}.tar.gz'))
-            dwnld = dwnld.format(year=yr, doy=doy)
-            try:
-                # Make online connection
-                with requests.get(dwnld) as req:
-                    req.raise_for_status()
-            except requests.exceptions.HTTPError as err:
-                estr = ''.join((str(err), '\n', 'Data not found'))
-                logger.info(estr)
-
-        # Copy request info to tarball file with generated name in `fname`.
-        fname = os.path.join(data_path,
-                             ''.join(('cosmic_', sub_str,
-                                      '_{year:04d}.{doy:03d}.tar')))
-        fname = fname.format(year=yr, doy=doy)
-        with open(fname, "wb") as local_file:
-            local_file.write(req.content)
-            local_file.close()
-        try:
-            # Uncompress files and remove tarball
-            tar = tarfile.open(fname)
-            tar.extractall(path=os.path.join(data_path, yrdoystr))
-            tar.close()
-
-        except tarfile.ReadError:
-            # If file cannot be read as a tarfile, then data does not exist.
-            # Skip this day since there is nothing left to do.
-            pass
-        # tar file must be removed (even if download fails)
-        os.remove(fname)
-
-    return
+download = functools.partial(gen_meth.download, supported_tags=tag_translation)
