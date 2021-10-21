@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import tempfile
 
@@ -58,3 +59,30 @@ class TestInstruments(InstTestClass):
         pysat.params.data['data_dirs'] = self.saved_path
         self.tempdir.cleanup()
         del self.inst_loc, self.saved_path, self.tempdir
+
+    @pytest.mark.parametrize("inst_dict", [x for x in instruments['download']])
+    def test_altitude_bin_keyword(self, inst_dict):
+        """Test altitude bin keyword."""
+
+        if inst_dict['tag'] != 'ionprf':
+            assert True
+            return
+
+        self.test_inst = pysat.Instrument(inst_module=inst_dict['inst_module'],
+                                          tag=inst_dict['tag'],
+                                          inst_id=inst_dict['inst_id'],
+                                          altitude_bin=5.)
+        date = inst_dict['inst_module']._test_dates[inst_dict['inst_id']]
+        date = date[inst_dict['tag']]
+        self.test_inst.load(date=date)
+
+        # Confirm presence of binned altitudes.
+        assert 'MSL_bin_alt' in self.test_inst.data
+
+        # Confirm binned altitudes are even factors of binning.
+        rem = np.remainder(self.test_inst['MSL_bin_alt'].values, 5)
+        idx, idy, = np.where(rem == 0)
+        idx2, idy2, = np.where(np.isnan(rem))
+        assert len(idx) + len(idx2) == np.product(rem.shape)
+
+        return
