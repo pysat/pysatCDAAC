@@ -407,7 +407,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         if tag == 'ionprf':
             # Set up coordinates.
             coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-            
+
         elif tag == 'atmprf':
             # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
