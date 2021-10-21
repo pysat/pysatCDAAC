@@ -329,7 +329,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         Object containing metadata such as column names and units
 
     """
-    global lower_l1_tags
 
     # Input check.
     if altitude_bin is not None:
@@ -367,7 +366,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # offset time could be obtained by parsing the filenames as is done
         # in list files however load isn't passed `format_str`, thus this
         # solution wouldn't work in all cases.
-        if tag not in lower_l1_tags or (tag == 'ionphs'):
+        if tag_translation[tag]['level'] == 'level2' or (tag == 'ionphs'):
             # Add 1E-5 seconds to time based upon occulting_inst_id and an
             # additional 1E-6 seconds added based upon cosmic ID.
             # Get cosmic satellite ID.
@@ -399,7 +398,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                                                    uts=utsec.values)
 
         # Rename index to time.
-        if tag in lower_l1_tags:
+        if tag_translation[tag]['level'] == 'level1b':
             # scnlv1 files already have a 2D time variable, it is a conflict.
             output = output.rename(time='profile_time')
         output = output.rename(index='time')
