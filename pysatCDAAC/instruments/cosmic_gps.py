@@ -445,7 +445,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             coord_labels = [coord for coord in output.coords
                             if output[coord].dims == msl_dims]
 
-            all_labels =[]
+            all_labels = []
             all_labels.extend(var_labels)
             all_labels.extend(coord_labels)
 
