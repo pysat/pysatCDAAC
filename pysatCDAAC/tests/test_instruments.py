@@ -64,7 +64,7 @@ class TestInstruments(InstTestClass):
     def test_altitude_bin_keyword(self, inst_dict):
         """Test altitude bin keyword."""
 
-        if inst_dict['tag'] != 'ionprf':
+        if inst_dict['tag'] == 'scnlv1':
             assert True
             return
 
