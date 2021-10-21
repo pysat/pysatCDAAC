@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""Collection of instruments for the pysatCDAAC library.
+
+Each instrument is contained within a subpackage of this set.
+
+"""
+
 __all__ = ['cosmic_gps']
 
 for inst in __all__:
