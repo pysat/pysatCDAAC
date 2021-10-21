@@ -8,8 +8,8 @@ import tarfile
 import pysat
 
 
-def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
-             user=None, password=None):
+def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
+             data_path=None, user=None, password=None):
     """Download COSMIC GPS data.
 
     Parameters
@@ -28,6 +28,9 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
         a dict with 'remote_dir', 'fname'. Inteded to be pre-set with
         functools.partial then assigned to new instrument code.
         (default=None)
+    server_tags : dict
+        Specify top-level directory name on CDAAC site, preferred processing
+        level, and backup processing level. (default=None)
     data_path : str
         Path to directory to download data to. (default=None)
     user : str or NoneType
@@ -54,9 +57,11 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
 
         # Try re-processed data (preferred).
         # Construct path string for online file.
-        dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                         "/repro2013/", level_str, "/", yrdoystr, "/",
-                         sub_str, '_repro2013',
+        dwnld = ''.join(("https://data.cosmic.ucar.edu/",
+                         server_tags['directory'], "/",
+                         server_tags['preferred'], "/",
+                         level_str, "/", yrdoystr, "/",
+                         sub_str, '_', server_tags['preferred'],
                          '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
                                                                doy=doy)))
         try:
@@ -66,9 +71,11 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
         except requests.exceptions.HTTPError:
             # If response is negative, try post-processed data
             # Construct path string for online file
-            dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                             "/postProc/", level_str, "/", yrdoystr, "/",
-                             sub_str, '_postProc',
+            dwnld = ''.join(("https://data.cosmic.ucar.edu/",
+                             server_tags['directory'], "/",
+                             server_tags['backup'], "/",
+                             level_str, "/", yrdoystr, "/",
+                             sub_str, '_', server_tags['backup'],
                              '_{year:04d}_{doy:03d}.tar.gz'))
             dwnld = dwnld.format(year=yr, doy=doy)
             try:

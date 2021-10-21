@@ -83,14 +83,14 @@ inst_ids = {'': list(tags.keys())}
 pandas_format = False
 
 # Translate tags to levels and camelcase names
-tag_translation = {'ionprf': {'level': 'level2', 'substr': 'ionPrf'},
+tag_translation = {'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
+                   'podtec': {'level': 'level1b', 'substr': 'podTec'},
+                   'scnlv1': {'level': 'level1b', 'substr': 'scnLv1'},
+                   'ionprf': {'level': 'level2', 'substr': 'ionPrf'},
                    'wetprf': {'level': 'level2', 'substr': 'wetPrf'},
                    'atmprf': {'level': 'level2', 'substr': 'atmPrf'},
                    'eraprf': {'level': 'level2', 'substr': 'eraPrf'},
-                   'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'},
-                   'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
-                   'podtec': {'level': 'level1b', 'substr': 'podTec'},
-                   'scnlv1': {'level': 'level1b', 'substr': 'scnLv1'}}
+                   'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'}}
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
@@ -648,4 +648,7 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
-download = functools.partial(gen_meth.download, supported_tags=tag_translation)
+server_tags = {'directory': 'gnss-ro/cosmic1/', 'preferred': 'repro2013',
+               'backup': 'postProc'}
+download = functools.partial(gen_meth.download, supported_tags=tag_translation,
+                             server_tags=server_tags)
