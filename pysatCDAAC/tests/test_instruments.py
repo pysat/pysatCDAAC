@@ -12,8 +12,8 @@ import tempfile
 
 import pysat
 # Import the test classes from pysat
-from pysat.utils import generate_instrument_list
 from pysat.tests.instrument_test_class import InstTestClass
+from pysat.utils import generate_instrument_list
 
 # Make sure to import your instrument library here
 import pysatCDAAC
