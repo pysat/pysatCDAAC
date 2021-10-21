@@ -315,7 +315,8 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         satellite id or None (default=None)
     altitude_bin : integer
         Number of kilometers to bin altitude profiles by when loading.
-        Works for all files except `tag=scnlv1`.
+        Works for all files except `tag=scnlv1, podtec, ionphs` as
+        `MSL_alt` is required in the file.
 
     Returns
     -------
@@ -329,8 +330,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
     # Input check.
     if altitude_bin is not None:
-        if tag == 'scnlv1':
-            estr = 'altitude_bin keyword only supported for "tag!=scnlv1"'
+        if tag in lower_l1_tags:
+            estr = ' '.join(('altitude_bin keyword only supported if `MSL_alt`',
+                            'present in the file.'))
             raise ValueError(estr)
 
     num = len(fnames)
@@ -420,6 +422,28 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
 
+        elif tag == 'eraprf':
+            # Set up coordinates.
+            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp',
+                            'Ref']
+
+        elif tag == 'gfsprf':
+            # Set up coordinates.
+            coord_labels = ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref']
+
+        elif tag == 'ionphs':
+            # Set up coordinates.
+            coord_labels = ['caL1Snr', 'pL1Snr', 'pL2Snr',
+                            'xLeo', 'yLeo', 'zLeo', 'xdLeo', 'ydLeo', 'zdLeo',
+                            'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps', 'zdGps',
+                            'exL1', 'exL2']
+
+        elif tag == 'podtec':
+            # Set up coordinates.
+            coord_labels = ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO',
+                            'z_LEO', 'TEC', 'elevation', 'caL1_SNR', 'pL2_SNR',
+                            'profile_time']
+
         elif tag == 'scnlv1':
             # Set up coordinates.
             coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
@@ -428,7 +452,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         output = output.set_coords(coord_labels)
 
         # Bin by altitude is requested by user
-        if altitude_bin is not None:
+        if altitude_bin is not None and ('MSL_alt' in coord_labels):
             # Deal with altitude binning, can't do it directly with
             # xarray since all dimensions get grouped.
 
