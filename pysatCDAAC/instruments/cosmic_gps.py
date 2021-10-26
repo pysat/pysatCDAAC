@@ -655,4 +655,5 @@ download_tags = \
            'tar_name': ''.join((tag_translation[tag]['substr'],
                                '_repro2013_{year:4d}_{day:03d}.tar.gz')),
            'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
-download = functools.partial(mm_cdaac.download, supported_tags=download_tags)
+download = functools.partial(mm_cdaac.download, supported_tags=download_tags,
+                             sub_path=True)
