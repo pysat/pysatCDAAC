@@ -4,6 +4,7 @@
 import os
 import requests
 import tarfile
+import tempfile
 
 import pysat
 
@@ -102,7 +103,7 @@ def download(date_array, tag, inst_id, supported_tags=None,
             # If file cannot be read as a tarfile, then data does not exist.
             # Skip this day since there is nothing left to do.
             pass
-        # tar file must be removed (even if download fails)
-        os.remove(fname)
+    # tar file must be removed (even if download fails)
+    temp_dir.cleanup()
 
     return
