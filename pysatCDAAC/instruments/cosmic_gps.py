@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Loads data from the COSMIC satellite.
+"""Loads data from the COSMIC satellite.
 
 The Constellation Observing System for Meteorology, Ionosphere, and Climate
 (COSMIC) is comprised of six satellites in LEO with GPS receivers. The
@@ -21,13 +20,13 @@ name
 tag
     Select profile type, or scintillation, using one of the following keys:
     {'ionprf': 'Ionospheric Profiles',
-    'wetprf': 'Atmospheric profiles with moisture',
-    'atmprf': 'Atmospheric profiles without moisture',
-    'eraprf': 'ERA-40 Interim reanalysis data',
-    'gfsprf': 'NCEP operational analysis data',
-    'ionphs': 'Ionospheric excess phase',
-    'podtec': 'Absolute Total Electron Content and auxiliary data',
-    'scnlv1': 'S4 scintillation index and auxiliary data'}
+     'wetprf': 'Atmospheric profiles with moisture',
+     'atmprf': 'Atmospheric profiles without moisture',
+     'eraprf': 'ERA-40 Interim reanalysis data',
+     'gfsprf': 'NCEP operational analysis data',
+     'ionphs': 'Ionospheric excess phase',
+     'podtec': 'Absolute Total Electron Content and auxiliary data',
+     'scnlv1': 'S4 scintillation index and auxiliary data'}
 inst_id
     None supported
 altitude_bin
