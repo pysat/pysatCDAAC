@@ -60,7 +60,7 @@ import xarray as xr
 
 import pysat
 from pysat.utils import files as futils
-from pysatCDAAC.instruments.methods import general as gen_meth
+from pysatCDAAC.instruments.methods import general as mm_cdaac
 
 
 # ----------------------------------------------------------------------------
@@ -648,7 +648,12 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
-server_tags = {'directory': 'gnss-ro/cosmic1/', 'preferred': 'repro2013',
-               'backup': 'postProc'}
-download = functools.partial(gen_meth.download, supported_tags=tag_translation,
-                             server_tags=server_tags)
+download_tags = \
+    {'': {tag:
+          {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
+                                  tag_translation[tag]['level'],
+                                  '/{year:4d}/{day:03d}/')),
+           'tar_name': ''.join((tag_translation[tag]['substr'],
+                               '_repro2013_{year:4d}_{day:03d}.tar.gz')),
+           'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
+download = functools.partial(mm_cdaac.download, supported_tags=download_tags)
