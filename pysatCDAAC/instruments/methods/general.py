@@ -8,7 +8,7 @@ import tarfile
 import pysat
 
 
-def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
+def download(date_array, tag, inst_id, supported_tags=None,
              data_path=None, user=None, password=None):
     """Download COSMIC GPS data.
 
@@ -25,12 +25,9 @@ def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
         is provided by pysat. (default='')
     supported_tags : dict
         dict of dicts. Keys are supported tag names for download. Value is
-        a dict with 'remote_dir', 'fname'. Inteded to be pre-set with
+        a dict with 'remote_dir', 'tar_name'. Intended to be pre-set with
         functools.partial then assigned to new instrument code.
         (default=None)
-    server_tags : dict
-        Specify top-level directory name on CDAAC site, preferred processing
-        level, and backup processing level. (default=None)
     data_path : str
         Path to directory to download data to. (default=None)
     user : str or NoneType
@@ -47,23 +44,29 @@ def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
 
     """
 
-    level_str = supported_tags[tag]['level']
-    sub_str = supported_tags[tag]['substr']
+    # Set up temporary directory for tar files
+    temp_dir = tempfile.TemporaryDirectory()
+
+    if tag is None:
+        tag = ''
+    if inst_id is None:
+        inst_id = ''
+    try:
+        inst_dict = supported_tags[inst_id][tag]
+    except KeyError:
+        raise ValueError('inst_id / tag combo unknown.')
 
     for date in date_array:
         pysat.logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
+        yr, day = pysat.utils.time.getyrdoy(date)
+        yrdoystr = '{year:04d}/{day:03d}'.format(year=yr, day=day)
 
         # Try re-processed data (preferred).
         # Construct path string for online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/",
-                         server_tags['directory'], "/",
-                         server_tags['preferred'], "/",
-                         level_str, "/", yrdoystr, "/",
-                         sub_str, '_', server_tags['preferred'],
-                         '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
-                                                               doy=doy)))
+                         inst_dict['remote_dir'],
+                         inst_dict['tar_name']))
+        dwnld = dwnld.format(year=yr, day=day)
         try:
             # Make online connection.
             with requests.get(dwnld) as req:
@@ -71,26 +74,21 @@ def download(date_array, tag, inst_id, supported_tags=None, server_tags=None,
         except requests.exceptions.HTTPError:
             # If response is negative, try post-processed data
             # Construct path string for online file
-            dwnld = ''.join(("https://data.cosmic.ucar.edu/",
-                             server_tags['directory'], "/",
-                             server_tags['backup'], "/",
-                             level_str, "/", yrdoystr, "/",
-                             sub_str, '_', server_tags['backup'],
-                             '_{year:04d}_{doy:03d}.tar.gz'))
-            dwnld = dwnld.format(year=yr, doy=doy)
-            try:
-                # Make online connection
-                with requests.get(dwnld) as req:
-                    req.raise_for_status()
-            except requests.exceptions.HTTPError as err:
-                estr = ''.join((str(err), '\n', 'Data not found'))
-                pysat.logger.info(estr)
+            if 'backup' in inst_dict.keys():
+                # If a backup exists, try alternate form
+                dwnld = dwnld.replace(inst_dict['backup'][0],
+                                      inst_dict['backup'][1])
+                try:
+                    # Make online connection
+                    with requests.get(dwnld) as req:
+                        req.raise_for_status()
+                except requests.exceptions.HTTPError as err:
+                    estr = ''.join((str(err), '\n', 'Data not found'))
+                    pysat.logger.info(estr)
 
         # Copy request info to tarball file with generated name in `fname`.
-        fname = os.path.join(data_path,
-                             ''.join(('cosmic_', sub_str,
-                                      '_{year:04d}.{doy:03d}.tar')))
-        fname = fname.format(year=yr, doy=doy)
+        fname = os.path.join(temp_dir.name, inst_dict['tar_name'])
+        fname = fname.format(year=yr, day=day)
         with open(fname, "wb") as local_file:
             local_file.write(req.content)
             local_file.close()
