@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.x.x] - 2021-xx-xx
 * Updated `cosmic_gps` to support xarray Datasets
+* Added support for `cosmic2_ivm`
 * Added `download` to general methods
 * Update links in documentation
 
