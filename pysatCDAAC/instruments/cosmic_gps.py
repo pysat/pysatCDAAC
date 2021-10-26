@@ -93,7 +93,7 @@ tag_translation = {'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2008, 1, 1))}
+_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2015, 1, 1))}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
