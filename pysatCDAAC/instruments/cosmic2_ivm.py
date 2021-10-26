@@ -49,7 +49,7 @@ directory_format = '{platform}/{name}/{tag}'
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {inst_id: {'': dt.datetime(2020, 1, 1)}
+_test_dates = {inst_id: {'': dt.datetime(2021, 1, 1)}
                for inst_id in inst_ids.keys()}
 
 # ----------------------------------------------------------------------------
