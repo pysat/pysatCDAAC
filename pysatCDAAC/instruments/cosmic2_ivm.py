@@ -26,6 +26,8 @@ Warnings
 
 import datetime as dt
 import functools
+import os
+import pandas as pds
 import warnings
 
 import pysat
@@ -131,12 +133,18 @@ def load(fnames, tag=None, inst_id=None):
 
     """
 
-    data, meta = pysat.utils.load_netcdf4(fnames, epoch_name='time')
+    data, meta = pysat.utils.load_netcdf4(fnames, epoch_name='uts')
+
+    # COSMIC2 uses GPS time, not yet supported in standard pysat load.
+    # Update the index seconds since Jan 6, 1980.
+    index = (pds.to_timedelta(data['time'].values, unit='s')
+             + dt.datetime(1980, 1, 6))
+    data.index = index
 
     return data, meta
 
 
-fname = 'ivmL2m_C2{id}.{{year:04d}}.{{day:03d}}.??_????.????_nc'
+fname = 'ivmL2m_C2{id}.{{year:04d}}.{{day:03d}}.??_????.{{version:04d}}_nc'
 supported_tags = {inst_id: {'': fname.format(id=inst_id.upper())}
                   for inst_id in inst_ids.keys()}
 list_files = functools.partial(mm_gen.list_files, supported_tags=supported_tags)
