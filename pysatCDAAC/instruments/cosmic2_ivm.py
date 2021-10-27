@@ -44,7 +44,7 @@ inst_ids = {'e1': [''], 'e2': [''], 'e3': [''], 'e4': [''], 'e5': [''],
             'e6': ['']}
 
 # Because all data products are stored in one tar file, inst_id not used
-directory_format = '{platform}/{name}/{tag}'
+directory_format = os.path.join('{platform}', '{name}', '{tag}')
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
@@ -136,7 +136,7 @@ def load(fnames, tag=None, inst_id=None):
     return data, meta
 
 
-fname = 'ivmL2m_C2{id}.{{year:04d}}.{{day:03d}}.01_2019.3430_nc'
+fname = 'ivmL2m_C2{id}.{{year:04d}}.{{day:03d}}.??_????.????_nc'
 supported_tags = {inst_id: {'': fname.format(id=inst_id.upper())}
                   for inst_id in inst_ids.keys()}
 list_files = functools.partial(mm_gen.list_files, supported_tags=supported_tags)
