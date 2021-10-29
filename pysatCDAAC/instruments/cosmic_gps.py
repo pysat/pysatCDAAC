@@ -32,7 +32,7 @@ inst_id
     None supported
 altitude_bin
     Number of kilometers to bin altitude profiles by when loading.
-    Works for all files except `tag=scnlv1`.
+    Works for all files except tag='scnlv1', 'podtec', or 'ionphs'.
 
 Warnings
 --------
@@ -315,7 +315,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         satellite id or None (default=None)
     altitude_bin : integer
         Number of kilometers to bin altitude profiles by when loading.
-        Works for all files except `tag=scnlv1, podtec, ionphs` as
+        Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
         `MSL_alt` is required in the file.
 
     Returns
