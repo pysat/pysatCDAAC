@@ -65,7 +65,7 @@ class TestInstruments(InstTestClass):
         """Test altitude bin keyword."""
 
         if inst_dict['tag'] in ['scnlv1', 'podtec', 'ionphs']:
-            assert True
+            pytest.skip("Binning not available for scnlv1 data")
             return
 
         self.test_inst = pysat.Instrument(inst_module=inst_dict['inst_module'],
