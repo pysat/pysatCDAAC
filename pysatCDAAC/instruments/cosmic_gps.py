@@ -326,13 +326,12 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         Object containing metadata such as column names and units
 
     """
-    global lower_l1_tags
 
     # Input check.
     if altitude_bin is not None:
         if tag in lower_l1_tags:
-            estr = ' '.join(('altitude_bin keyword only supported if `MSL_alt`',
-                            'present in the file.'))
+            estr = ' '.join(['altitude_bin keyword only supported if `MSL_alt`',
+                             'present in the file.'])
             raise ValueError(estr)
 
     num = len(fnames)
@@ -713,7 +712,6 @@ def download(date_array, tag, inst_id, data_path=None,
     the end user.
 
     """
-    global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
 
     if tag in lower_l2_tags:
         level_str = 'level2'
