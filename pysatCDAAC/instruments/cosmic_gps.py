@@ -332,7 +332,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
     # Input check.
     if altitude_bin is not None:
-        if tag in lower_l1_tags:
+        if tag in ['podtec', 'scnlv1', 'ionphs']:
             estr = ' '.join(['altitude_bin keyword only supported if `MSL_alt`',
                              'present in the file.'])
             raise ValueError(estr)
