@@ -456,7 +456,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # xarray since all dimensions get grouped.
 
             # Technique depends upon altitude values being in sorted
-            # ascending order
+            # ascending order. First, filter out negative altitudes.
+            idx, idy, = np.where(output['MSL_alt'] < 0)
+            output['MSL_alt'][idx, idy] = np.nan
             idx = output['MSL_alt'].argsort(axis=-1)
 
             # Get all variables/coordinates using same dimensions as MSL_alt
@@ -481,15 +483,15 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             coord_labels.extend(['MSL_bin_alt'])
             all_labels.extend(['MSL_bin_alt'])
 
-            # Normalize and round actual altitude values by altitude_bin
-            bin_alts = (output['MSL_alt'] / altitude_bin).round().values
+            # Normalize and floor actual altitude values by altitude_bin
+            bin_alts = np.floor((output['MSL_alt'] / altitude_bin).values)
 
             # Reconstruct altitude from bin_alts value
             alts = bin_alts * altitude_bin
 
             # Create array for bounds of each bin that data will be
             # grouped into.
-            bin_arr = np.arange(np.nanmax(bin_alts))
+            bin_arr = np.arange(np.nanmax(bin_alts) + 1)
 
             # Indexing information mapping which altitude goes to which bin
             dig_bins = np.digitize(bin_alts, bin_arr)
@@ -515,8 +517,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                     else:
                         temp_calc = np.split(output[label].values[i, :],
                                              ans[1][1:])
-                    # Average all values in each bin
-                    new_coords[label][i, 0:len(temp_calc)] = \
+                    # Average all values in each bin. Guard against first
+                    # realized bin being larger than first possible bin.
+                    ir = dig_bins[i, 0] - 1
+                    new_coords[label][i, ir:len(temp_calc) + ir] = \
                         [np.mean(temp_vals) for temp_vals in temp_calc]
 
             # Create new Dataset with binned data values.
