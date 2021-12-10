@@ -408,46 +408,30 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # Ensure time is increasing.
         output = output.sortby('time')
 
+        # Set up coordinates, depending upon file type.
         if tag == 'ionprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-
         elif tag == 'atmprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-
         elif tag == 'sonprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'lat', 'lon']
-
         elif tag == 'wetprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
-
         elif tag == 'eraprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp',
                             'Ref']
-
         elif tag == 'gfsprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref']
-
         elif tag == 'ionphs':
-            # Set up coordinates.
             coord_labels = ['caL1Snr', 'pL1Snr', 'pL2Snr',
                             'xLeo', 'yLeo', 'zLeo', 'xdLeo', 'ydLeo', 'zdLeo',
                             'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps', 'zdGps',
                             'exL1', 'exL2']
-
         elif tag == 'podtec':
-            # Set up coordinates.
             coord_labels = ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO',
                             'z_LEO', 'TEC', 'elevation', 'caL1_SNR', 'pL2_SNR',
                             'profile_time']
-
         elif tag == 'scnlv1':
-            # Set up coordinates.
             coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
 
         # Apply coordinates to loaded data.
