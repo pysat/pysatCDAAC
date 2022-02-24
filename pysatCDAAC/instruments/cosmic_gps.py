@@ -305,7 +305,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         return pds.Series(None, dtype='object')
 
 
-def load(fnames, tag=None, inst_id=None, altitude_bin=None):
+def load(fnames, tag=None, inst_id=None, altitude_bin=None,
+         altitude_bin_num=300):
     """Load COSMIC GPS files.
 
     Parameters
@@ -316,10 +317,13 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int
         Number of kilometers to bin altitude profiles by when loading.
         Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
         `MSL_alt` is required in the file.
+    altitude_bin_num : int
+        Number of bins to use when binning profile altitude if
+        `altitude_bin` is not None. (default=300)
 
     Returns
     -------
@@ -478,7 +482,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
             # Create array for bounds of each bin that data will be
             # grouped into.
-            bin_arr = np.arange(np.nanmax(bin_alts) + 1)
+            bin_arr = np.arange(altitude_bin_num + 1)
 
             # Indexing information mapping which altitude goes to which bin
             dig_bins = np.digitize(bin_alts, bin_arr)
