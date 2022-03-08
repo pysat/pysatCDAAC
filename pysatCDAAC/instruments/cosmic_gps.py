@@ -317,10 +317,11 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : int
+    altitude_bin : int or NoneType
         Number of kilometers to bin altitude profiles by when loading.
         Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
-        `MSL_alt` is required in the file.
+        `MSL_alt` is required in the file. If None, no binnin performed.
+        (default=None)
     altitude_bin_num : int
         Number of bins to use when binning profile altitude if
         `altitude_bin` is not None. (default=300)
