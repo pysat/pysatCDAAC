@@ -482,7 +482,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
 
             # Create array for bounds of each bin that data will be
             # grouped into.
-            bin_arr = np.arange(altitude_bin_num + 1)
+            bin_arr = np.arange(altitude_bin_num)
 
             # Indexing information mapping which altitude goes to which bin
             dig_bins = np.digitize(bin_alts, bin_arr)
