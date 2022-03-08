@@ -76,7 +76,7 @@ class TestInstruments(InstTestClass):
     @pytest.mark.parametrize("inst_dict", [x for x in instruments['download']])
     @pytest.mark.parametrize("bin_num", [100, 200])
     def test_altitude_bin_keyword(self, inst_dict, bin_num):
-        """Test altitude bin keyword.
+        """Test altitude binning keywords.
 
         Parameters
         ----------
