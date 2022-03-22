@@ -483,7 +483,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
 
             # Create array for bounds of each bin that data will be
             # grouped into.
-            bin_arr = np.arange(altitude_bin_num)
+            bin_arr = np.arange(altitude_bin_num + 1)
 
             # Indexing information mapping which altitude goes to which bin
             dig_bins = np.digitize(bin_alts, bin_arr)
@@ -491,8 +491,8 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
             # Create arrays to store results
             new_coords = {}
             for label in all_labels:
-                new_coords[label] = np.full(
-                    (len(output['time']), len(bin_arr)), np.nan)
+                new_coords[label] = np.full((len(output['time']),
+                                             len(bin_arr) - 1), np.nan)
 
             # Go through each profile and mean values in each altitude bin.
             # Solution inspired by
@@ -513,7 +513,8 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
                     # realized bin being larger than first possible bin.
                     ir = dig_bins[i, 0] - 1
                     new_coords[label][i, ir:len(temp_calc) + ir] = \
-                        [np.mean(temp_vals) for temp_vals in temp_calc]
+                        [np.mean(temp_vals)
+                         for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
 
             # Create new Dataset with binned data values.
             # First, prep coordinate data.
