@@ -305,7 +305,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         return pds.Series(None, dtype='object')
 
 
-def load(fnames, tag=None, inst_id=None, altitude_bin=None):
+def load(fnames, tag=None, inst_id=None, altitude_bin=None,
+         altitude_bin_num=300):
     """Load COSMIC GPS files.
 
     Parameters
@@ -316,10 +317,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int or NoneType
         Number of kilometers to bin altitude profiles by when loading.
         Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
-        `MSL_alt` is required in the file.
+        `MSL_alt` is required in the file. If None, no binnin performed.
+        (default=None)
+    altitude_bin_num : int
+        Number of bins to use when binning profile altitude if
+        `altitude_bin` is not None. (default=300)
 
     Returns
     -------
@@ -478,7 +483,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
             # Create array for bounds of each bin that data will be
             # grouped into.
-            bin_arr = np.arange(np.nanmax(bin_alts) + 1)
+            bin_arr = np.arange(altitude_bin_num + 1)
 
             # Indexing information mapping which altitude goes to which bin
             dig_bins = np.digitize(bin_alts, bin_arr)
@@ -486,8 +491,8 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
             # Create arrays to store results
             new_coords = {}
             for label in all_labels:
-                new_coords[label] = np.full(
-                    (len(output['time']), len(bin_arr)), np.nan)
+                new_coords[label] = np.full((len(output['time']),
+                                             len(bin_arr) - 1), np.nan)
 
             # Go through each profile and mean values in each altitude bin.
             # Solution inspired by
@@ -508,7 +513,8 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                     # realized bin being larger than first possible bin.
                     ir = dig_bins[i, 0] - 1
                     new_coords[label][i, ir:len(temp_calc) + ir] = \
-                        [np.mean(temp_vals) for temp_vals in temp_calc]
+                        [np.mean(temp_vals)
+                         for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
 
             # Create new Dataset with binned data values.
             # First, prep coordinate data.
