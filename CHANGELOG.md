@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Added `download` to general methods
 * Update links in documentation
 * Added support for `cosmic2_ivm`
+* Updated instrument tests to use pysat 3.0.2 syntax
 
 ## [0.0.2] - 2021-06-18
 * Update instrument style for pysat 3.0.0
