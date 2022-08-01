@@ -112,7 +112,7 @@ def download(date_array, tag, inst_id, supported_tags=None,
             # Skip this day since there is nothing left to do.
             pass
 
-    # Remove the temporary direcctory (even if download fails)
+    # Remove the temporary directory (even if download fails)
     temp_dir.cleanup()
 
     return
