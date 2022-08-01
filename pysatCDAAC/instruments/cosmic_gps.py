@@ -31,7 +31,7 @@ inst_id
     None supported
 altitude_bin
     Number of kilometers to bin altitude profiles by when loading.
-    Currently only supported for tag='ionprf'.
+    Works for all files except tag='scnlv1', 'podtec', or 'ionphs'.
 
 Warnings
 --------
@@ -305,7 +305,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         return pds.Series(None, dtype='object')
 
 
-def load(fnames, tag=None, inst_id=None, altitude_bin=None):
+def load(fnames, tag=None, inst_id=None, altitude_bin=None,
+         altitude_bin_num=300):
     """Load COSMIC GPS files.
 
     Parameters
@@ -316,9 +317,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int or NoneType
         Number of kilometers to bin altitude profiles by when loading.
-        Currently only supported for tag='ionprf'.
+        Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
+        `MSL_alt` is required in the file. If None, no binnin performed.
+        (default=None)
+    altitude_bin_num : int
+        Number of bins to use when binning profile altitude if
+        `altitude_bin` is not None. (default=300)
 
     Returns
     -------
@@ -331,8 +337,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
 
     # Input check.
     if altitude_bin is not None:
-        if tag != 'ionprf':
-            estr = 'altitude_bin keyword only supported for "tag=ionprf"'
+        if tag in ['podtec', 'scnlv1', 'ionphs']:
+            estr = ' '.join(['altitude_bin keyword only supported if `MSL_alt`',
+                             'present in the file.'])
             raise ValueError(estr)
 
     num = len(fnames)
@@ -342,16 +349,17 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # Set up loading files with a mixture of data lengths.
         if tag == 'atmprf':
             coords = {}
-            p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
+            temp_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
             dim_label = 'dim1'
-            for key in p_keys:
+            for key in temp_keys:
                 coords[key] = dim_label
 
-            p_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
+            temp_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
             dim_label = 'dim2'
-            for key in p_keys:
+            for key in temp_keys:
                 coords[key] = dim_label
         else:
+            # All other files have a single 2D dimension
             coords = {}
 
         # Call generalized load_files routine.
@@ -405,107 +413,131 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         # Ensure time is increasing.
         output = output.sortby('time')
 
+        # Set up coordinates, depending upon file type.
         if tag == 'ionprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-            var_labels = ['ELEC_dens', 'TEC_cal']
-
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
-
-            if altitude_bin is not None:
-                # Deal with altitude binning, can't do it directly with
-                # xarray since all dimensions get grouped.
-
-                coord_labels.extend(['MSL_bin_alt'])
-                all_labels = []
-                all_labels.extend(coord_labels)
-                all_labels.extend(var_labels)
-
-                # Normalize and round actual altitude values by altitude_bin.
-                bin_alts = (output['MSL_alt'] / altitude_bin).round().values
-
-                # Reconstruct altitude from bin_alts value.
-                alts = bin_alts * altitude_bin
-
-                # Create array for bounds of each bin that data will be
-                # grouped into.
-                bin_arr = np.arange(np.nanmax(bin_alts))
-
-                # Indexing information mapping which altitude goes to which bin
-                dig_bins = np.digitize(bin_alts, bin_arr)
-
-                # Create arrays to store results.
-                new_coords = {}
-                for label in all_labels:
-                    new_coords[label] = np.full(
-                        (len(output['time']), len(bin_arr)), np.nan)
-
-                # Go through each profile and mean values in each altitude bin.
-                # Solution inspired by
-                # (https://stackoverflow.com/questions/38013778/
-                # is-there-any-numpy-group-by-function)
-                # However, unique didn't work how I wanted for multi-dimensional
-                # array, thus the for loop.
-                for i in range(len(output['time'])):
-                    ans = np.unique(dig_bins[i, :], return_index=True)
-
-                    for label in all_labels:
-                        if label == 'MSL_bin_alt':
-                            temp_calc = np.split(alts[i, :], ans[1][1:])
-                        else:
-                            temp_calc = np.split(output[label].values[i, :],
-                                                 ans[1][1:])
-                        # Average all values in each bin
-                        new_coords[label][i, 0:len(temp_calc)] = \
-                            [np.mean(temp_vals) for temp_vals in temp_calc]
-
-                # Create new Dataset with binned data values.
-                # First, prep coordinate data.
-                coords = {}
-                data_vars = {}
-                for key in coord_labels:
-                    coords[key] = (('time', 'RO'), new_coords[key])
-                coords['time'] = output['time']
-
-                # Create data_vars input dict.
-                for key in var_labels:
-                    data_vars[key] = (('time', 'RO'), new_coords[key])
-
-                # Create new Dataset.
-                new_set = xr.Dataset(data_vars=data_vars, coords=coords)
-
-                # Copy over other variables.
-                for key in output.data_vars:
-                    if key not in all_labels:
-                        new_set[key] = output[key]
-
-                # Replace initial Dataset.
-                output = new_set
         elif tag == 'atmprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
         elif tag == 'sonprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'lat', 'lon']
-
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
         elif tag == 'wetprf':
-            # Set up coordinates.
             coord_labels = ['MSL_alt', 'Lat', 'Lon']
-
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
+        elif tag == 'eraprf':
+            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp',
+                            'Ref']
+        elif tag == 'gfsprf':
+            coord_labels = ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref']
+        elif tag == 'ionphs':
+            coord_labels = ['caL1Snr', 'pL1Snr', 'pL2Snr',
+                            'xLeo', 'yLeo', 'zLeo', 'xdLeo', 'ydLeo', 'zdLeo',
+                            'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps', 'zdGps',
+                            'exL1', 'exL2']
+        elif tag == 'podtec':
+            coord_labels = ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO',
+                            'z_LEO', 'TEC', 'elevation', 'caL1_SNR', 'pL2_SNR',
+                            'profile_time']
         elif tag == 'scnlv1':
-            # Set up coordinates.
             coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
 
-            # Apply coordinates to loaded data.
-            output = output.set_coords(coord_labels)
+        # Apply coordinates to loaded data.
+        output = output.set_coords(coord_labels)
+
+        # Bin by altitude is requested by user
+        if altitude_bin is not None and ('MSL_alt' in coord_labels):
+            # Deal with altitude binning, can't do it directly with
+            # xarray since all dimensions get grouped.
+
+            # Technique depends upon altitude values being in sorted
+            # ascending order. First, filter out negative altitudes.
+            idx, idy, = np.where(output['MSL_alt'] < 0)
+            output['MSL_alt'][idx, idy] = np.nan
+            idx = output['MSL_alt'].argsort(axis=-1)
+
+            # Get all variables/coordinates using same dimensions as MSL_alt
+            # and sort.
+            msl_dims = output['MSL_alt'].dims
+
+            var_labels = [var for var in output.data_vars
+                          if output[var].dims == msl_dims]
+            coord_labels = [coord for coord in output.coords
+                            if output[coord].dims == msl_dims]
+
+            all_labels = []
+            all_labels.extend(var_labels)
+            all_labels.extend(coord_labels)
+
+            for var in all_labels:
+                if output[var].dims == msl_dims:
+                    output[var] = (msl_dims,
+                                   np.take_along_axis(output[var].values, idx,
+                                                      axis=1))
+
+            coord_labels.extend(['MSL_bin_alt'])
+            all_labels.extend(['MSL_bin_alt'])
+
+            # Normalize and floor actual altitude values by altitude_bin
+            bin_alts = np.floor((output['MSL_alt'] / altitude_bin).values)
+
+            # Reconstruct altitude from bin_alts value
+            alts = bin_alts * altitude_bin
+
+            # Create array for bounds of each bin that data will be
+            # grouped into.
+            bin_arr = np.arange(altitude_bin_num + 1)
+
+            # Indexing information mapping which altitude goes to which bin
+            dig_bins = np.digitize(bin_alts, bin_arr)
+
+            # Create arrays to store results
+            new_coords = {}
+            for label in all_labels:
+                new_coords[label] = np.full((len(output['time']),
+                                             len(bin_arr) - 1), np.nan)
+
+            # Go through each profile and mean values in each altitude bin.
+            # Solution inspired by
+            # (https://stackoverflow.com/questions/38013778/
+            # is-there-any-numpy-group-by-function)
+            # However, unique didn't work how I wanted for multi-dimensional
+            # array, thus the for loop.
+            for i in range(len(output['time'])):
+                ans = np.unique(dig_bins[i, :], return_index=True)
+
+                for label in all_labels:
+                    if label == 'MSL_bin_alt':
+                        temp_calc = np.split(alts[i, :], ans[1][1:])
+                    else:
+                        temp_calc = np.split(output[label].values[i, :],
+                                             ans[1][1:])
+                    # Average all values in each bin. Guard against first
+                    # realized bin being larger than first possible bin.
+                    ir = dig_bins[i, 0] - 1
+                    new_coords[label][i, ir:len(temp_calc) + ir] = \
+                        [np.mean(temp_vals)
+                         for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
+
+            # Create new Dataset with binned data values.
+            # First, prep coordinate data.
+            coords = {}
+            data_vars = {}
+            for key in coord_labels:
+                coords[key] = (('time', 'RO'), new_coords[key])
+            coords['time'] = output['time']
+
+            # Create data_vars input dict
+            for key in var_labels:
+                data_vars[key] = (('time', 'RO'), new_coords[key])
+
+            # Create new Dataset
+            new_set = xr.Dataset(data_vars=data_vars, coords=coords)
+
+            # Copy over other variables
+            for key in output.data_vars:
+                if key not in all_labels:
+                    new_set[key] = output[key]
+
+            # Replace initial Dataset
+            output = new_set
 
         # Use the first available file to pick out meta information
         meta = pysat.Meta()
