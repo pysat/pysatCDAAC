@@ -93,7 +93,7 @@ def clean(self):
     return
 
 
-def load(fnames, tag=None, inst_id=None):
+def load(fnames, tag='', inst_id=''):
     """Load COSMIC2 IVM data into `pandas.DataFrame` and `pysat.Meta` objects.
 
     This routine is called as needed by pysat. It is not intended
@@ -106,10 +106,10 @@ def load(fnames, tag=None, inst_id=None):
         This input is nominally provided by pysat itself.
     tag : string
         tag name used to identify particular data set to be loaded.
-        This input is nominally provided by pysat itself.
+        This input is nominally provided by pysat itself. (default='')
     inst_id : string
         Satellite ID used to identify particular data set to be loaded.
-        This input is nominally provided by pysat itself.
+        This input is nominally provided by pysat itself. (default='')
 
     Returns
     -------
@@ -127,7 +127,7 @@ def load(fnames, tag=None, inst_id=None):
     --------
     ::
 
-        inst = pysat.Instrument('cosmic2', 'ivm', inst_id='e1', tag='')
+        inst = pysat.Instrument('cosmic2', 'ivm', inst_id='e1')
         inst.load(2020, 1)
 
     """
