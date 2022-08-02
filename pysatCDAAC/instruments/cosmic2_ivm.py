@@ -7,6 +7,8 @@ occultation of GPS signals by the atmosphere provides a measurement of
 atmospheric parameters. Data downloaded from the COSMIC Data Analaysis
 and Archival Center.
 
+More info about the dataset can be found at https://doi.org/10.5065/t353-c093
+
 Properties
 ----------
 platform
@@ -65,8 +67,13 @@ def init(self):
     Runs once upon instantiation.
 
     """
-    ack = ' '.join(('Add acknowledgements here')).upper()
-    refs = ' '.join(('Add refs here')).upper()
+    ack = ' '.join(('FORMOSAT-7/COSMIC-2 is a partnership between the National',
+                    'Space Organization in Taiwan and NOAA, the U.S. Air',
+                    'Force, and the University Corporation for Atmospheric',
+                    'Research (UCAR) in the United States.'))
+    refs = ' '.join(('UCAR COSMIC Program, 2019: COSMIC-2 Data Products [Data',
+                     'set]. UCAR/NCAR - COSMIC, Access date [insert date],'
+                     'https://doi.org/10.5065/T353-C093'))
     self.acknowledgements = ack
     self.references = refs
     pysat.logger.info(ack)
