@@ -132,9 +132,9 @@ def load(fnames, tag='', inst_id=''):
 
     """
 
-    data, meta = pysat.utils.load_netcdf4(fnames, epoch_name='time',
-                                          epoch_unit='s',
-                                          epoch_origin=dt.datetime(1980, 1, 6))
+    data, meta = pysat.utils.io.load_netcdf(fnames, epoch_name='time',
+                                            epoch_unit='s',
+                                            epoch_origin=dt.datetime(1980, 1, 6))
 
     return data, meta
 
