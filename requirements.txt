@@ -1,5 +1,5 @@
 netCDF4
 numpy
 pandas
-pysat>=3.0.2
+pysat>=3.0.3
 requests

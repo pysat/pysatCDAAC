@@ -43,8 +43,7 @@ name = 'ivm'
 
 tags = {'': 'Ion Velocity Meter data'}
 
-inst_ids = {'e1': [''], 'e2': [''], 'e3': [''], 'e4': [''], 'e5': [''],
-            'e6': ['']}
+inst_ids = {inst_id: list(tags.keys()) for inst_id in ['e1', 'e2', 'e3', 'e4', 'e5', 'e6']}
 
 # Because all data products are stored in one tar file, inst_id not used
 directory_format = os.path.join('{platform}', '{name}', '{tag}')
@@ -111,10 +110,10 @@ def load(fnames, tag='', inst_id=''):
     fnames : array-like
         iterable of filename strings, full path, to data files to be loaded.
         This input is nominally provided by pysat itself.
-    tag : string
+    tag : str
         tag name used to identify particular data set to be loaded.
         This input is nominally provided by pysat itself. (default='')
-    inst_id : string
+    inst_id : str
         Satellite ID used to identify particular data set to be loaded.
         This input is nominally provided by pysat itself. (default='')
 
@@ -141,7 +140,8 @@ def load(fnames, tag='', inst_id=''):
 
     data, meta = pysat.utils.io.load_netcdf(
         fnames, epoch_name='time', epoch_unit='s',
-        epoch_origin=dt.datetime(1980, 1, 6))
+        epoch_origin=dt.datetime(1980, 1, 6), 
+        meta_translation={'_FillValue': meta.labels.fill_val})
 
     return data, meta
 
