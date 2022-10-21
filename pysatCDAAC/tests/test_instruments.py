@@ -58,7 +58,7 @@ class TestInstruments(clslib.InstLibTests):
                                           altitude_bin_num=bin_num)
         date = inst_dict['inst_module']._test_dates[inst_dict['inst_id']]
         date = date[inst_dict['tag']]
-        self.test_inst.load(date=date)
+        self.test_inst.load(date=date, use_header=True)
 
         # Confirm presence of binned altitudes.
         assert 'MSL_bin_alt' in self.test_inst.data
