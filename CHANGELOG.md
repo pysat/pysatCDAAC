@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   as a variable.
 * Added `download` to general methods
 * Update links in documentation
+* Implement pyproject.toml
 
 ## [0.0.2] - 2021-06-18
 * Update instrument style for pysat 3.0.0
