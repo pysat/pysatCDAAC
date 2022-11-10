@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   * Update links in documentation
   * Update testing compliance
   * Add windows testing
+  * Add workflow for testing with pysat RC
 
 ## [0.0.2] - 2021-06-18
 * Update instrument style for pysat 3.0.0
