@@ -15,8 +15,7 @@ import pysatCDAAC
 # Import the test classes from pysat
 from pysat.tests.classes import cls_instrument_library as clslib
 
-# Tell the standard tests which instruments to run each test on.
-# Need to return instrument list for custom tests.
+# Retrieve the lists of CDAAC instruments and testing methods
 instruments = clslib.InstLibTests.initialize_test_package(
     clslib.InstLibTests, inst_loc=pysatCDAAC.instruments)
 
@@ -33,9 +32,8 @@ class TestInstruments(clslib.InstLibTests):
 
     Note
     ----
-    Uses class level setup and teardown so that all tests use the same
-    temporary directory. We do not want to geneate a new tempdir for each test,
-    as the load tests need to be the same as the download tests.
+    All standard tests, setup, and teardown inherited from the core pysat
+    instrument test class.
 
     """
 
