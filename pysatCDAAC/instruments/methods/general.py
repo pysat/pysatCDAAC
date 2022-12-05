@@ -105,7 +105,6 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
         try:
             # Uncompress files and remove tarball
             tar = tarfile.open(fname)
-            # Note: sort_files only used for cosmic2 ivm
             if sort_files:
                 inst_ids = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6']
                 fnames = tar.getnames()
