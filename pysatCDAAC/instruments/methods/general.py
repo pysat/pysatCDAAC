@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Provides default routines for CDAAC instruments into pysat."""
 
-import fnmatch
 import importlib
 import os
 import requests
@@ -9,11 +8,10 @@ import tarfile
 import tempfile
 
 import pysat
-from pysat.utils.files import construct_searchstring_from_format
 
 
-def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
-             sub_path=False, sort_files=False, user=None, password=None):
+def download(date_array, tag, inst_id, supported_tags=None,
+             data_path=None, sub_path=False, user=None, password=None):
     """Download data from CDAAC https server.
 
     Parameters
@@ -36,9 +34,6 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
         Path to directory to download data to. (default=None)
     sub_path : bool
         If True, break up data into further subdirectories based on date.
-        (default=False)
-    sort_files : bool
-        If True, sorts files by inst_id after all are downloaded.
         (default=False)
     user : str or NoneType
         User string input used for download. Provided by user and passed via
@@ -105,21 +100,12 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
         try:
             # Uncompress files and remove tarball
             tar = tarfile.open(fname)
-            if sort_files:
-                inst_ids = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6']
-                fnames = tar.getnames()
-                for id in inst_ids:
-                    search_str, final_path = get_instrument_data_info(
-                        'cosmic2_ivm', tag=tag, inst_id=id)
-                    matched_files = fnmatch.filter(fnames, search_str)
-                    for fname in matched_files:
-                        tar.extract(fname, path=final_path)
+            if sub_path:
+                # Send to subdirectory.
+                tar.extractall(path=os.path.join(data_path, yrdoystr))
             else:
-                if sub_path:
-                    final_path = os.path.join(data_path, yrdoystr)
-                else:
-                    final_path = data_path
-                tar.extractall(path=final_path)
+                # Send to top level.
+                tar.extractall(path=data_path)
             tar.close()
 
         except tarfile.ReadError:
@@ -133,36 +119,28 @@ def download(date_array, tag, inst_id, supported_tags=None, data_path=None,
     return
 
 
-def get_instrument_data_info(inst_mod_name, tag='', inst_id='', **kwargs):
-    """Get the search string and `data_path` attribute from an Instrument module.
+def get_instrument_data_path(inst_mod_name, tag='', inst_id='', **kwargs):
+    """Get the `data_path` attribute from an Instrument sub-module.
 
     Parameters
     ----------
     inst_mod_name : str
-        pysatCDAAC Instrument module name
+        pysatSpaceWeather Instrument module name
     tag : str
         String specifying the Instrument tag (default='')
     inst_id : str
         String specifying the instrument identification (default='')
     kwargs : dict
         Optional additional kwargs that may be used to initialize an Instrument
-
     Returns
     -------
-    search_str : str
-        Pattern for instrument file names
     data_path : str
         Path where the Instrument data is stored
-
     """
 
     # Import the desired instrument module by name
     inst_mod = importlib.import_module(".".join(["pysatCDAAC",
                                                  "instruments", inst_mod_name]))
-
-    search_dict = construct_searchstring_from_format(
-        inst_mod.supported_tags[inst_id][tag])
-    search_str = search_dict['search_string']
 
     # Initialize a temporary instrument to obtain pysat configuration
     temp_inst = pysat.Instrument(inst_module=inst_mod, tag=tag, inst_id=inst_id,
@@ -174,4 +152,4 @@ def get_instrument_data_info(inst_mod_name, tag='', inst_id='', **kwargs):
     # Delete the temporary instrument
     del temp_inst
 
-    return search_str, data_path
+    return data_path

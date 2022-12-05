@@ -28,6 +28,7 @@ Warnings
 
 import datetime as dt
 import functools
+import os
 import warnings
 
 import pysat
@@ -44,6 +45,9 @@ tags = {'': 'Ion Velocity Meter data'}
 
 inst_ids = {inst_id: list(tags.keys()) for inst_id in ['e1', 'e2', 'e3', 'e4',
                                                        'e5', 'e6']}
+
+# Because all data products are stored in one tar file, inst_id not used
+directory_format = os.path.join('{platform}', '{name}', '{tag}')
 
 # ----------------------------------------------------------------------------
 # Instrument test attributes
@@ -154,5 +158,4 @@ download_tags = {
         'tar_name': 'ivmL2m_postProc_{year:4d}_{day:03d}.tar.gz',
         'fname': supported_tags[inst_id]['']}}
     for inst_id in inst_ids.keys()}
-download = functools.partial(mm_cdaac.download, supported_tags=download_tags,
-                             sort_files=True)
+download = functools.partial(mm_cdaac.download, supported_tags=download_tags)
