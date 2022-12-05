@@ -161,7 +161,6 @@ def get_instrument_data_info(inst_mod_name, tag='', inst_id='', **kwargs):
     inst_mod = importlib.import_module(".".join(["pysatCDAAC",
                                                  "instruments", inst_mod_name]))
 
-    # Construct a search string to identify data files
     search_dict = construct_searchstring_from_format(
         inst_mod.supported_tags[inst_id][tag])
     search_str = search_dict['search_string']
