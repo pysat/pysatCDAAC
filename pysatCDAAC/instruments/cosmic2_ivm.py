@@ -29,7 +29,6 @@ Warnings
 import datetime as dt
 import functools
 import os
-import warnings
 
 import pysat
 from pysat.instruments.methods import general as mm_gen
@@ -84,20 +83,8 @@ def init(self):
     return
 
 
-def clean(self):
-    """Clean COSMIC2 IVM data to the specified level.
-
-    Note
-    ----
-    'clean' - Not specified
-    'dusty' - Not specified
-    'dirty' - Not specified
-    'none'  No cleaning applied, routine not called in this case.
-
-    """
-    warnings.warn('Cleaning not yet implemented')
-
-    return
+# No cleaning, use standard warning function instead
+clean = mm_cdaac.clean_warn
 
 
 def load(fnames, tag='', inst_id=''):

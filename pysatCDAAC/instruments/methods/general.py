@@ -5,6 +5,7 @@ import os
 import requests
 import tarfile
 import tempfile
+import warnings
 
 import pysat
 
@@ -114,5 +115,22 @@ def download(date_array, tag, inst_id, supported_tags=None,
 
     # Remove the temporary directory (even if download fails)
     temp_dir.cleanup()
+
+    return
+
+
+def clean_warn(self):
+    """Warn user that cleaning not yet available for this data set.
+
+    Note
+    ----
+    'clean' - Not specified
+    'dusty' - Not specified
+    'dirty' - Not specified
+    'none'  No cleaning applied, routine not called in this case.
+
+    """
+    warnings.warn(' '.join(('No cleaning routines available for',
+                            self.platform, self.name)))
 
     return
