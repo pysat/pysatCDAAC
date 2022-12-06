@@ -5,12 +5,13 @@ import os
 import requests
 import tarfile
 import tempfile
+import warnings
 
 import pysat
 
 
 def download(date_array, tag, inst_id, supported_tags=None,
-             data_path=None, user=None, password=None):
+             data_path=None, sub_path=False, user=None, password=None):
     """Download data from CDAAC https server.
 
     Parameters
@@ -31,6 +32,9 @@ def download(date_array, tag, inst_id, supported_tags=None,
         (default=None)
     data_path : str
         Path to directory to download data to. (default=None)
+    sub_path : bool
+        If True, break up data into further subdirectories based on date.
+        (default=False)
     user : str or NoneType
         User string input used for download. Provided by user and passed via
         pysat. If an account is required for downloads this routine here must
@@ -96,14 +100,37 @@ def download(date_array, tag, inst_id, supported_tags=None,
         try:
             # Uncompress files and remove tarball
             tar = tarfile.open(fname)
-            tar.extractall(path=os.path.join(data_path, yrdoystr))
+            if sub_path:
+                # Send to subdirectory.
+                tar.extractall(path=os.path.join(data_path, yrdoystr))
+            else:
+                # Send to top level.
+                tar.extractall(path=data_path)
             tar.close()
 
         except tarfile.ReadError:
             # If file cannot be read as a tarfile, then data does not exist.
             # Skip this day since there is nothing left to do.
             pass
-    # tar file must be removed (even if download fails)
+
+    # Remove the temporary directory (even if download fails)
     temp_dir.cleanup()
+
+    return
+
+
+def clean_warn(self):
+    """Warn user that cleaning not yet available for this data set.
+
+    Note
+    ----
+    'clean' - Not specified
+    'dusty' - Not specified
+    'dirty' - Not specified
+    'none'  No cleaning applied, routine not called in this case.
+
+    """
+    warnings.warn(' '.join(('No cleaning routines available for',
+                            self.platform, self.name)))
 
     return

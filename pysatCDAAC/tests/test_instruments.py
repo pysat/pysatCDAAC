@@ -9,17 +9,22 @@ Imports test methods from pysat.tests.instrument_test_class
 import numpy as np
 import pytest
 
-import pysat
-# Import the test classes from pysat
-from pysat.tests.classes import cls_instrument_library as clslib
-
 # Make sure to import your instrument library here
 import pysatCDAAC
 
+# Import the test classes from pysat
+from pysat.tests.classes import cls_instrument_library as clslib
 
 # Retrieve the lists of CDAAC instruments and testing methods
 instruments = clslib.InstLibTests.initialize_test_package(
     clslib.InstLibTests, inst_loc=pysatCDAAC.instruments)
+
+# Build a custom list of gps instruments.  These require custom binning tests
+# that are not used for the in situ instruments.
+instruments['gps'] = []
+for inst in instruments['download']:
+    if 'gps' in inst['inst_module'].name:
+        instruments['gps'].append(inst)
 
 
 class TestInstruments(clslib.InstLibTests):
@@ -33,7 +38,7 @@ class TestInstruments(clslib.InstLibTests):
     """
 
     @pytest.mark.second
-    @pytest.mark.parametrize("inst_dict", [x for x in instruments['download']])
+    @pytest.mark.parametrize("inst_dict", instruments['gps'])
     @pytest.mark.parametrize("bin_num", [100, 200])
     def test_altitude_bin_keyword(self, inst_dict, bin_num):
         """Test altitude binning keywords.
@@ -51,14 +56,9 @@ class TestInstruments(clslib.InstLibTests):
             pytest.skip("Binning not available for level-1 data")
             return
 
-        self.test_inst = pysat.Instrument(inst_module=inst_dict['inst_module'],
-                                          tag=inst_dict['tag'],
-                                          inst_id=inst_dict['inst_id'],
-                                          altitude_bin=5.,
-                                          altitude_bin_num=bin_num)
-        date = inst_dict['inst_module']._test_dates[inst_dict['inst_id']]
-        date = date[inst_dict['tag']]
-        self.test_inst.load(date=date, use_header=True)
+        inst_dict['kwargs'] = {'altitude_bin': 5., 'altitude_bin_num': bin_num}
+        self.test_inst, date = clslib.initialize_test_inst_and_date(inst_dict)
+        self.test_inst.load(date=date)
 
         # Confirm presence of binned altitudes.
         assert 'MSL_bin_alt' in self.test_inst.data
