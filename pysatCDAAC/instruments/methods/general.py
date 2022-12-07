@@ -52,22 +52,15 @@ def download(date_array, tag, inst_id, supported_tags=None,
     # Set up temporary directory for tar files
     temp_dir = tempfile.TemporaryDirectory()
 
-    if tag is None:
-        tag = ''
-    if inst_id is None:
-        inst_id = ''
-    try:
-        inst_dict = supported_tags[inst_id][tag]
-    except KeyError:
-        raise ValueError('inst_id / tag combo unknown.')
+inst_dict = supported_tags[inst_id][tag]
 
     for date in date_array:
         pysat.logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
         yr, day = pysat.utils.time.getyrdoy(date)
         yrdoystr = '{year:04d}/{day:03d}'.format(year=yr, day=day)
 
-        # Try re-processed data (preferred).
-        # Construct path string for online file.
+        # Try re-processed data (preferred). Construct a path string for the
+        # online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/",
                          inst_dict['remote_dir'],
                          inst_dict['tar_name']))
