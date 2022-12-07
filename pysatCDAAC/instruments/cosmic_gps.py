@@ -152,14 +152,14 @@ def clean(self):
             # Filter densities when negative.
             dens_copy = self['ELEC_dens'].values
             for i, profile in enumerate(self['time']):
-                # Take out all densities below any altitude (< 325) with
+                # Take out all densities below any altitude (< 325 km) with
                 # a negative density.
                 idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
                                 & (self[i, :, 'MSL_alt'] <= 325))
                 if len(idx) > 0:
                     dens_copy[i, 0:idx[-1] + 1] = np.nan
 
-                # Take out all densities above any altitude > 325 with a
+                # Take out all densities above any altitude > 325 km with a
                 # negative density.
                 idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
                                 & (self[i, :, 'MSL_alt'] > 325))
@@ -180,7 +180,7 @@ def clean(self):
             self.data = self.data.where(normGrad <= 1.)
 
     elif self.tag == 'scnlv1':
-        # scintillation files
+        # Scintillation files
         if self.clean_level == 'clean':
             # Filter out profiles where source provider processing doesn't work.
             self.data = self.data.where(self['alttp_s4max'] != -999., drop=True)
