@@ -90,6 +90,21 @@ tag_translation = {'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
                    'atmprf': {'level': 'level2', 'substr': 'atmPrf'},
                    'eraprf': {'level': 'level2', 'substr': 'eraPrf'},
                    'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'}}
+
+coord_translation = {
+    'ionprf': ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi'],
+    'atmprf': ['MSL_alt', 'Lat', 'Lon', 'Azim'],
+    'sonprf': ['MSL_alt', 'lat', 'lon'],
+    'wetprf': ['MSL_alt', 'Lat', 'Lon'],
+    'eraprf': ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'gfsprf': ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'ionphs': ['caL1Snr', 'pL1Snr', 'pL2Snr', 'xLeo', 'yLeo', 'zLeo', 'xdLeo',
+               'ydLeo', 'zdLeo', 'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps',
+               'zdGps', 'exL1', 'exL2'],
+    'podtec': ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO', 'z_LEO', 'TEC',
+               'elevation', 'caL1_SNR', 'pL2_SNR', 'profile_time'],
+    'scnlv1': ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']}
+
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
@@ -410,30 +425,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
         output = output.sortby('time')
 
         # Set up coordinates, depending upon file type.
-        if tag == 'ionprf':
-            coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-        elif tag == 'atmprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-        elif tag == 'sonprf':
-            coord_labels = ['MSL_alt', 'lat', 'lon']
-        elif tag == 'wetprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon']
-        elif tag == 'eraprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp',
-                            'Ref']
-        elif tag == 'gfsprf':
-            coord_labels = ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref']
-        elif tag == 'ionphs':
-            coord_labels = ['caL1Snr', 'pL1Snr', 'pL2Snr',
-                            'xLeo', 'yLeo', 'zLeo', 'xdLeo', 'ydLeo', 'zdLeo',
-                            'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps', 'zdGps',
-                            'exL1', 'exL2']
-        elif tag == 'podtec':
-            coord_labels = ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO',
-                            'z_LEO', 'TEC', 'elevation', 'caL1_SNR', 'pL2_SNR',
-                            'profile_time']
-        elif tag == 'scnlv1':
-            coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
+        coord_labels = coord_translation[tag]
 
         # Apply coordinates to loaded data.
         output = output.set_coords(coord_labels)
