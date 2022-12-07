@@ -675,6 +675,7 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
+# Use general CDAAC download routine.
 download_tags = {
     '': {tag:
          {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',

@@ -134,11 +134,13 @@ def load(fnames, tag='', inst_id=''):
     return data, meta
 
 
+# Use general pysat routine for list files.
 fname = 'ivmL2m_C2{id}.{{year:04d}}.{{day:03d}}.??_????.{{version:04d}}_nc'
 supported_tags = {inst_id: {'': fname.format(id=inst_id.upper())}
                   for inst_id in inst_ids.keys()}
 list_files = functools.partial(mm_gen.list_files, supported_tags=supported_tags)
 
+# Use general CDAAC routine for download.
 download_tags = {
     inst_id: {'': {
         'remote_dir': 'gnss-ro/cosmic2/postProc/level2/{year:4d}/{day:03d}/',
