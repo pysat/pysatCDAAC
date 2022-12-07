@@ -31,7 +31,7 @@ def download(date_array, tag, inst_id, supported_tags=None,
         functools.partial then assigned to new instrument code.
         (default=None)
     data_path : str
-        Path to directory to download data to. (default=None)
+        Path to directory to download data to. (default='')
     sub_path : bool
         If True, break up data into further subdirectories based on date.
         (default=False)
@@ -77,8 +77,8 @@ def download(date_array, tag, inst_id, supported_tags=None,
             with requests.get(dwnld) as req:
                 req.raise_for_status()
         except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
-            # Construct path string for online file
+            # If response is negative, try post-processed data. Construct
+            # a path string for the online file
             if 'backup' in inst_dict.keys():
                 # If a backup exists, try alternate form
                 dwnld = dwnld.replace(inst_dict['backup'][0],

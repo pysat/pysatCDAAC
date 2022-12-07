@@ -345,7 +345,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
     num = len(fnames)
     # Make sure there are files to read.
     if num != 0:
-
         # Set up loading files with a mixture of data lengths.
         if tag == 'atmprf':
             coords = {}
