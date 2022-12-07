@@ -345,9 +345,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
     num = len(fnames)
     # Make sure there are files to read.
     if num != 0:
-        # Set up loading files with a mixture of data lengths.
+        coords = {}
+        # Specify additional coords for datasets with nonstandard dimensions.
         if tag == 'atmprf':
-            coords = {}
             temp_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
             dim_label = 'dim1'
             for key in temp_keys:
@@ -357,9 +357,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
             dim_label = 'dim2'
             for key in temp_keys:
                 coords[key] = dim_label
-        else:
-            # All other files have a single 2D dimension
-            coords = {}
 
         # Call generalized load_files routine.
         output = load_files(fnames, tag=tag, inst_id=inst_id, coords=coords)
