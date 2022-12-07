@@ -397,11 +397,11 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
 
-        output['index'] = \
-            pysat.utils.time.create_datetime_index(year=output.year.values,
-                                                   month=output.month.values,
-                                                   day=output.day.values,
-                                                   uts=utsec.values)
+        output['index'] = pysat.utils.time.create_datetime_index(
+            year=output.year.values,
+            month=output.month.values,
+            day=output.day.values,
+            uts=utsec.values)
 
         # Rename index to time.
         if tag_translation[tag]['level'] == 'level1b':
@@ -511,9 +511,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
                     # Average all values in each bin. Guard against first
                     # realized bin being larger than first possible bin.
                     ir = dig_bins[i, 0] - 1
-                    new_coords[label][i, ir:len(temp_calc) + ir] = \
-                        [np.mean(temp_vals)
-                         for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
+                    new_coords[label][i, ir:len(temp_calc) + ir] = [
+                        np.mean(temp_vals)
+                        for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
 
             # Create new Dataset with binned data values.
             # First, prep coordinate data.
@@ -678,13 +678,13 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
-download_tags = \
-    {'': {tag:
-          {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
-                                  tag_translation[tag]['level'],
-                                  '/{year:4d}/{day:03d}/')),
-           'tar_name': ''.join((tag_translation[tag]['substr'],
+download_tags = {
+    '': {tag:
+         {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
+                                 tag_translation[tag]['level'],
+                                 '/{year:4d}/{day:03d}/')),
+          'tar_name': ''.join((tag_translation[tag]['substr'],
                                '_repro2013_{year:4d}_{day:03d}.tar.gz')),
-           'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
+          'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
 download = functools.partial(mm_cdaac.download, supported_tags=download_tags,
                              sub_path=True)
