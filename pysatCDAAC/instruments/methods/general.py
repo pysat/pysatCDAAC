@@ -52,7 +52,7 @@ def download(date_array, tag, inst_id, supported_tags=None,
     # Set up temporary directory for tar files
     temp_dir = tempfile.TemporaryDirectory()
 
-inst_dict = supported_tags[inst_id][tag]
+    inst_dict = supported_tags[inst_id][tag]
 
     for date in date_array:
         pysat.logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
