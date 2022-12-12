@@ -31,7 +31,7 @@ def download(date_array, tag, inst_id, supported_tags=None,
         functools.partial then assigned to new instrument code.
         (default=None)
     data_path : str
-        Path to directory to download data to. (default=None)
+        Path to directory to download data to. (default='')
     sub_path : bool
         If True, break up data into further subdirectories based on date.
         (default=False)
@@ -52,22 +52,15 @@ def download(date_array, tag, inst_id, supported_tags=None,
     # Set up temporary directory for tar files
     temp_dir = tempfile.TemporaryDirectory()
 
-    if tag is None:
-        tag = ''
-    if inst_id is None:
-        inst_id = ''
-    try:
-        inst_dict = supported_tags[inst_id][tag]
-    except KeyError:
-        raise ValueError('inst_id / tag combo unknown.')
+    inst_dict = supported_tags[inst_id][tag]
 
     for date in date_array:
         pysat.logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
         yr, day = pysat.utils.time.getyrdoy(date)
         yrdoystr = '{year:04d}/{day:03d}'.format(year=yr, day=day)
 
-        # Try re-processed data (preferred).
-        # Construct path string for online file.
+        # Try re-processed data (preferred). Construct a path string for the
+        # online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/",
                          inst_dict['remote_dir'],
                          inst_dict['tar_name']))
@@ -77,8 +70,8 @@ def download(date_array, tag, inst_id, supported_tags=None,
             with requests.get(dwnld) as req:
                 req.raise_for_status()
         except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
-            # Construct path string for online file
+            # If response is negative, try post-processed data. Construct
+            # a path string for the online file
             if 'backup' in inst_dict.keys():
                 # If a backup exists, try alternate form
                 dwnld = dwnld.replace(inst_dict['backup'][0],
