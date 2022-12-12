@@ -1,6 +1,6 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="https://raw.githubusercontent.com/pysat/pysatCDAAC/logo.png" alt="pysat" title="pysatCDAAC"</img>
+        <img width="20%" src="https://raw.githubusercontent.com/pysat/pysatCDAAC/main/logo.png" alt="pysat" title="pysatCDAAC"</img>
 </div>
 
 # pysatCDAAC: pysat support for COSMIC Data Analysis and Archive Center instruments
