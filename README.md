@@ -1,9 +1,10 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="/logo.png" alt="pysat" title="pysatCDAAC"</img>
+        <img width="20%" src="https://raw.githubusercontent.com/pysat/pysatCDAAC/logo.png" alt="pysat" title="pysatCDAAC"</img>
 </div>
 
 # pysatCDAAC: pysat support for COSMIC Data Analysis and Archive Center instruments
+[![PyPI Package latest release](https://img.shields.io/pypi/v/pysatCDAAC.svg)](https://pypi.python.org/pypi/pysatCDAAC)
 [![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/pysat/pysatCDAAC/badge.svg?branch=main)](https://coveralls.io/github/pysat/pysatCDAAC?branch=main)
 [![DOI](https://zenodo.org/badge/287322558.svg)](https://zenodo.org/badge/latestdoi/287322558)
@@ -16,7 +17,7 @@ Python 3.7+.
 
 | Common modules | Community modules |
 | -------------- | ----------------- |
-| netCDF4        | pysat>=3.0.0      |
+| netCDF4        | pysat>=3.0.3      |
 | numpy          |                   |
 | pandas         |                   |
 | requests       |                   |

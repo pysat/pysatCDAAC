@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Loads data from the COSMIC satellite.
+"""Loads data from the COSMIC satellite.
 
 The Constellation Observing System for Meteorology, Ionosphere, and Climate
 (COSMIC) is comprised of six satellites in LEO with GPS receivers. The
@@ -21,36 +20,46 @@ name
 tag
     Select profile type, or scintillation, using one of the following keys:
     {'ionprf': 'Ionospheric Profiles',
-    'wetprf': 'Atmospheric profiles with moisture',
-    'atmprf': 'Atmospheric profiles without moisture',
-    'eraprf': 'ERA-40 Interim reanalysis data',
-    'gfsprf': 'NCEP operational analysis data',
-    'ionphs': 'Ionospheric excess phase',
-    'podtec': 'Absolute Total Electron Content and auxiliary data',
-    'scnlv1': 'S4 scintillation index and auxiliary data'}
+     'wetprf': 'Atmospheric profiles with moisture',
+     'atmprf': 'Atmospheric profiles without moisture',
+     'eraprf': 'ERA-40 Interim reanalysis data',
+     'gfsprf': 'NCEP operational analysis data',
+     'ionphs': 'Ionospheric excess phase',
+     'podtec': 'Absolute Total Electron Content and auxiliary data',
+     'scnlv1': 'S4 scintillation index and auxiliary data'}
 inst_id
     None supported
 altitude_bin
     Number of kilometers to bin altitude profiles by when loading.
-    Currently only supported for tag='ionprf'.
+    Works for all files except tag='scnlv1', 'podtec', or 'ionphs'.
 
 Warnings
 --------
 - Routine was not produced by COSMIC team
+- Files are labeled with times at minute resolution which can result in multiple
+  COSMIC data profiles at the same time. pysat requires that instruments have
+  monotonic and unique times, thus, to meet pysat requirements a time shift
+  (based upon file/data parameters) is added to each profile to ensure
+  all times are unique. This time shift within a minute
+  is not considered significant given the released data structure.
+  For level-1b data files time shifts are distributed throughout the minute,
+  for level-2 files the time shifts are less than .0001 seconds.
+  The difference in time distribution is related to the availability of a
+  unique combination of parameters at the different file levels.
 
 """
 
 import datetime as dt
-import os
-import requests
-import tarfile
+import functools
 
-import numpy as np
 import netCDF4
+import numpy as np
 import pandas as pds
+import xarray as xr
+
 import pysat
-from pysat import logger
 from pysat.utils import files as futils
+from pysatCDAAC.instruments.methods import general as mm_cdaac
 
 
 # ----------------------------------------------------------------------------
@@ -58,12 +67,6 @@ from pysat.utils import files as futils
 
 platform = 'cosmic'
 name = 'gps'
-
-l1_tags = ['ionPhs', 'podTec', 'scnLv1']
-lower_l1_tags = [tag.lower() for tag in l1_tags]
-
-l2_tags = ['ionPrf', 'wetPrf', 'atmPrf', 'eraPrf', 'gfsPrf']
-lower_l2_tags = [tag.lower() for tag in l2_tags]
 
 tags = {'ionprf': 'Ionospheric Profiles',
         'wetprf': 'Atmospheric profiles with moisture',
@@ -76,18 +79,46 @@ tags = {'ionprf': 'Ionospheric Profiles',
 
 inst_ids = {'': list(tags.keys())}
 
+pandas_format = False
+
+# Translate tags to levels and camelcase names
+tag_translation = {'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
+                   'podtec': {'level': 'level1b', 'substr': 'podTec'},
+                   'scnlv1': {'level': 'level1b', 'substr': 'scnLv1'},
+                   'ionprf': {'level': 'level2', 'substr': 'ionPrf'},
+                   'wetprf': {'level': 'level2', 'substr': 'wetPrf'},
+                   'atmprf': {'level': 'level2', 'substr': 'atmPrf'},
+                   'eraprf': {'level': 'level2', 'substr': 'eraPrf'},
+                   'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'}}
+
+coord_translation = {
+    'ionprf': ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi'],
+    'atmprf': ['MSL_alt', 'Lat', 'Lon', 'Azim'],
+    'sonprf': ['MSL_alt', 'lat', 'lon'],
+    'wetprf': ['MSL_alt', 'Lat', 'Lon'],
+    'eraprf': ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'gfsprf': ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'ionphs': ['caL1Snr', 'pL1Snr', 'pL2Snr', 'xLeo', 'yLeo', 'zLeo', 'xdLeo',
+               'ydLeo', 'zdLeo', 'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps',
+               'zdGps', 'exL1', 'exL2'],
+    'podtec': ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO', 'z_LEO', 'TEC',
+               'elevation', 'caL1_SNR', 'pL2_SNR', 'profile_time'],
+    'scnlv1': ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']}
+
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2008, 1, 1))}
+_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2014, 5, 1))}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
 
 
 def init(self):
-    """Initializes the Instrument object with instrument specific values.
+    """Initialize the Instrument object with instrument specific values.
 
+    Note
+    ----
     Runs once upon instantiation.
 
     """
@@ -102,7 +133,7 @@ def init(self):
                      'https://cdaac-www.cosmic.ucar.edu/cdaac/doc/cosmic.html'))
     self.acknowledgements = ack
     self.references = refs
-    logger.info(ack)
+    pysat.logger.info(ack)
 
     return
 
@@ -124,53 +155,51 @@ def clean(self):
     if self.tag == 'ionprf':
         # Ionosphere density profiles
         if self.clean_level == 'clean':
-            # Try and make sure all data is good. Filter out profiles
-            # where source provider processing doesn't do so.
-            # Then get the max density and altitude of this max.
-            self.data = self.data[((self['edmaxalt'] != -999.)
-                                   & (self['edmax'] != -999.))]
+            # Filter out profiles where source provider processing doesn't work.
+            self.data = self.data.where(self['edmaxalt'] != -999., drop=True)
+            self.data = self.data.where(self['edmax'] != -999., drop=True)
 
-            # Make sure edmaxalt is in a "reasonable" range
-            self.data = self.data[((self['edmaxalt'] >= 175.)
-                                   & (self['edmaxalt'] <= 475.))]
+            # Ensure 'edmaxalt' in "reasonable" range.
+            self.data = self.data.where(((self['edmaxalt'] >= 175.)
+                                        & (self['edmaxalt'] <= 475.)),
+                                        drop=True)
 
-            # Remove negative densities
-            for i, profile in enumerate(self['profiles']):
-                # Take out all densities below the highest altitude negative
-                # dens below 325
-                idx, = np.where((profile.ELEC_dens < 0)
-                                & (profile.index <= 325))
+            # Filter densities when negative.
+            dens_copy = self['ELEC_dens'].values
+            for i, profile in enumerate(self['time']):
+                # Take out all densities below any altitude (< 325 km) with
+                # a negative density.
+                idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
+                                & (self[i, :, 'MSL_alt'] <= 325))
                 if len(idx) > 0:
-                    profile.iloc[0:(idx[-1] + 1)] = np.nan
-                # Take out all densities above the lowest altitude negative
-                # dens above 325
-                idx, = np.where((profile.ELEC_dens < 0)
-                                & (profile.index > 325))
-                if len(idx) > 0:
-                    profile.iloc[idx[0]:] = np.nan
+                    dens_copy[i, 0:idx[-1] + 1] = np.nan
 
-                # Do an altitude density gradient check to reduce number of
-                # cycle slips
-                densDiff = profile.ELEC_dens.diff()
-                altDiff = profile.MSL_alt.diff()
-                normGrad = (densDiff / (altDiff * profile.ELEC_dens)).abs()
-                idx, = np.where((normGrad > 1.) & normGrad.notnull())
+                # Take out all densities above any altitude > 325 km with a
+                # negative density.
+                idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
+                                & (self[i, :, 'MSL_alt'] > 325))
                 if len(idx) > 0:
-                    self[i, 'edmaxalt'] = np.nan
-                    self[i, 'edmax'] = np.nan
-                    self[i, 'edmaxlat'] = np.nan
-                    profile['ELEC_dens'] *= np.nan
+                    dens_copy[i, idx[0]:] = np.nan
+            self[:, :, 'ELEC_dens'] = dens_copy
 
-        # Filter out any measurements where things have been set to NaN
-        self.data = self.data[self['edmaxalt'].notnull()]
+            # Do an altitude density gradient check to reduce number of
+            # cycle slips.
+            densDiff = self['ELEC_dens'].diff(dim='RO')
+            altDiff = self['MSL_alt'].diff(dim='RO')
+            normGrad = (densDiff / (altDiff * self[:, :-1, 'ELEC_dens']))
+
+            # Calculate maximum gradient per profile.
+            normGrad = normGrad.max(dim='RO')
+
+            # Remove profiles with high altitude gradients
+            self.data = self.data.where(normGrad <= 1.)
 
     elif self.tag == 'scnlv1':
-        # scintillation files
+        # Scintillation files
         if self.clean_level == 'clean':
-            # Make sure all data is good by filtering out profiles where
-            # the source provider processing doesn't work
-            self.data = self.data[((self['alttp_s4max'] != -999.)
-                                   & (self['s4max9sec'] != -999.))]
+            # Filter out profiles where source provider processing doesn't work.
+            self.data = self.data.where(self['alttp_s4max'] != -999., drop=True)
+            self.data = self.data.where(self['s4max9sec'] != -999., drop=True)
 
     return
 
@@ -205,7 +234,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     """
 
     estr = 'Building a list of COSMIC files, which can possibly take time. '
-    logger.info('{:s}~1s per 100K files'.format(estr))
+    pysat.logger.info('{:s}~1s per 100K files'.format(estr))
 
     # Note that Files.from_os() could be used here except for the fact
     # that there are multiple COSMIC files per given time.
@@ -216,11 +245,11 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     # Overloading revision and cycle keyword below
     if format_str is None:
         # COSMIC file format string
-        if tag in lower_l2_tags or (tag == 'ionphs'):
+        if tag_translation[tag]['level'] == 'level2' or (tag == 'ionphs'):
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   'G{cycle:02d}_{version:04d}.????_nc'))
-        elif tag in lower_l1_tags:
+        elif tag_translation[tag]['level'] == 'level1b':
             format_str = ''.join(('*/*/*_C{revision:03d}.{year:04d}.',
                                   '{day:03d}.{hour:02d}.{minute:02d}.',
                                   '????.G{cycle:02d}.??_{version:04d}.????_nc'))
@@ -291,7 +320,8 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
         return pds.Series(None, dtype='object')
 
 
-def load(fnames, tag=None, inst_id=None, altitude_bin=None):
+def load(fnames, tag=None, inst_id=None, altitude_bin=None,
+         altitude_bin_num=300):
     """Load COSMIC GPS files.
 
     Parameters
@@ -302,9 +332,14 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : integer
+    altitude_bin : int or NoneType
         Number of kilometers to bin altitude profiles by when loading.
-        Currently only supported for tag='ionprf'.
+        Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
+        `MSL_alt` is required in the file. If None, no binning performed.
+        (default=None)
+    altitude_bin_num : int
+        Number of bins to use when binning profile altitude if
+        `altitude_bin` is not None. (default=300)
 
     Returns
     -------
@@ -314,54 +349,185 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
         Object containing metadata such as column names and units
 
     """
-    global lower_l1_tags
 
-    # input check
+    # Input check.
     if altitude_bin is not None:
-        if tag != 'ionprf':
-            estr = 'altitude_bin keyword only supported for "tag=ionprf"'
+        if tag in ['podtec', 'scnlv1', 'ionphs']:
+            estr = ' '.join(['altitude_bin keyword only supported if `MSL_alt`',
+                             'present in the file.'])
             raise ValueError(estr)
 
     num = len(fnames)
-    # make sure there are files to read
+    # Make sure there are files to read.
     if num != 0:
-        # call separate load_files routine, segmented for possible
-        # multiprocessor load, not included and only benefits about 20%
-        output = pds.DataFrame(load_files(fnames, tag=tag, inst_id=inst_id,
-                                          altitude_bin=altitude_bin))
-        utsec = output.hour * 3600. + output.minute * 60. + output.second
-        # FIXME: need to switch to xarray so unique time stamps not needed
-        # make times unique by adding a unique amount of time less than a second
-        if tag not in lower_l1_tags or (tag == 'ionphs'):
-            # Add 1E-6 seconds to time based upon `occulting_inst_id`.
-            # An additional 1E-7 seconds are added based upon the
-            # COSMIC sat ID. Start by getting the COSMIC sat ID.
-            c_id = np.array([snip[3] for snip in output.fileStamp]).astype(int)
+        coords = {}
+        # Specify additional coords for datasets with nonstandard dimensions.
+        if tag == 'atmprf':
+            temp_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
+            dim_label = 'dim1'
+            for key in temp_keys:
+                coords[key] = dim_label
 
-            # Get the time offset
+            temp_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
+            dim_label = 'dim2'
+            for key in temp_keys:
+                coords[key] = dim_label
+
+        # Call generalized load_files routine.
+        output = load_files(fnames, tag=tag, inst_id=inst_id, coords=coords)
+
+        # Create datetime index.
+        utsec = output.hour * 3600. + output.minute * 60. + output.second
+
+        # Not all profiles are unique within a minute sampling, thus
+        # we add a small time offset to ensure unique times. A more consistent
+        # offset time could be obtained by parsing the filenames as is done
+        # in list files however load isn't passed `format_str`, thus this
+        # solution wouldn't work in all cases.
+        if tag_translation[tag]['level'] == 'level2' or (tag == 'ionphs'):
+            # Add 1E-5 seconds to time based upon occulting_inst_id and an
+            # additional 1E-6 seconds added based upon cosmic ID.
+            # Get cosmic satellite ID.
+            c_id = np.array([snip.values.tolist()[3]
+                             for snip in output.fileStamp]).astype(int)
+            # Time offset
             if tag != 'ionphs':
                 utsec += output.occulting_sat_id * 1.e-5 + c_id * 1.e-6
             else:
                 utsec += output.occsatId * 1.e-5 + c_id * 1.e-6
         else:
-            # Construct time out of three different parameters.
-            # The duration must be less than 10,000, the
-            # prn_id is allowed two characters, and the
-            # antenna_id gets one character.  The prn_id and
-            # antenna_id are not sufficient to define a unique time.
+            # Construct time out of three different parameters:
+            #   duration must be less than 100,000
+            #   prn_id is allowed two characters
+            #   antenna_id gets one character
+            # prn_id and antenna_id alone are not sufficient for a unique time.
+            if np.nanmax(output.duration) >= 1.e5:
+                estr = ''.join(('Assumptions for the time shift calculation ',
+                                'are not holding. Please contact pysatCDAAC ',
+                                'developers.'))
+                raise ValueError(estr)
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
 
-        # Create the Index
-        output.index = pysat.utils.time.create_datetime_index(
-            year=output.year, month=output.month, day=output.day, uts=utsec)
-        if not output.index.is_unique:
-            raise ValueError('Datetimes returned by load_files not unique.')
+        output['index'] = pysat.utils.time.create_datetime_index(
+            year=output.year.values,
+            month=output.month.values,
+            day=output.day.values,
+            uts=utsec.values)
 
-        # Ensure UTS strictly increasing
-        output.sort_index(inplace=True)
+        # Rename index to time.
+        if tag_translation[tag]['level'] == 'level1b':
+            # scnlv1 files already have a 2D time variable, it is a conflict.
+            output = output.rename(time='profile_time')
+        output = output.rename(index='time')
+
+        # Ensure time is increasing.
+        output = output.sortby('time')
+
+        # Set up coordinates, depending upon file type.
+        coord_labels = coord_translation[tag]
+
+        # Apply coordinates to loaded data.
+        output = output.set_coords(coord_labels)
+
+        # Bin by altitude is requested by user
+        if altitude_bin is not None and ('MSL_alt' in coord_labels):
+            # Deal with altitude binning, can't do it directly with
+            # xarray since all dimensions get grouped.
+
+            # Technique depends upon altitude values being in sorted
+            # ascending order. First, filter out negative altitudes.
+            idx, idy, = np.where(output['MSL_alt'] < 0)
+            output['MSL_alt'][idx, idy] = np.nan
+            idx = output['MSL_alt'].argsort(axis=-1)
+
+            # Get all variables/coordinates using same dimensions as MSL_alt
+            # and sort.
+            msl_dims = output['MSL_alt'].dims
+
+            var_labels = [var for var in output.data_vars
+                          if output[var].dims == msl_dims]
+            coord_labels = [coord for coord in output.coords
+                            if output[coord].dims == msl_dims]
+
+            all_labels = []
+            all_labels.extend(var_labels)
+            all_labels.extend(coord_labels)
+
+            for var in all_labels:
+                if output[var].dims == msl_dims:
+                    output[var] = (msl_dims,
+                                   np.take_along_axis(output[var].values, idx,
+                                                      axis=1))
+
+            coord_labels.extend(['MSL_bin_alt'])
+            all_labels.extend(['MSL_bin_alt'])
+
+            # Normalize and floor actual altitude values by altitude_bin
+            bin_alts = np.floor((output['MSL_alt'] / altitude_bin).values)
+
+            # Reconstruct altitude from bin_alts value
+            alts = bin_alts * altitude_bin
+
+            # Create array for bounds of each bin that data will be
+            # grouped into.
+            bin_arr = np.arange(altitude_bin_num + 1)
+
+            # Indexing information mapping which altitude goes to which bin
+            dig_bins = np.digitize(bin_alts, bin_arr)
+
+            # Create arrays to store results
+            new_coords = {}
+            for label in all_labels:
+                new_coords[label] = np.full((len(output['time']),
+                                             len(bin_arr) - 1), np.nan)
+
+            # Go through each profile and mean values in each altitude bin.
+            # Solution inspired by
+            # (https://stackoverflow.com/questions/38013778/
+            # is-there-any-numpy-group-by-function)
+            # However, unique didn't work how I wanted for multi-dimensional
+            # array, thus the for loop.
+            for i in range(len(output['time'])):
+                ans = np.unique(dig_bins[i, :], return_index=True)
+
+                for label in all_labels:
+                    if label == 'MSL_bin_alt':
+                        temp_calc = np.split(alts[i, :], ans[1][1:])
+                    else:
+                        temp_calc = np.split(output[label].values[i, :],
+                                             ans[1][1:])
+                    # Average all values in each bin. Guard against first
+                    # realized bin being larger than first possible bin.
+                    ir = dig_bins[i, 0] - 1
+                    new_coords[label][i, ir:len(temp_calc) + ir] = [
+                        np.mean(temp_vals)
+                        for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
+
+            # Create new Dataset with binned data values.
+            # First, prep coordinate data.
+            coords = {}
+            data_vars = {}
+            for key in coord_labels:
+                coords[key] = (('time', 'RO'), new_coords[key])
+            coords['time'] = output['time']
+
+            # Create data_vars input dict
+            for key in var_labels:
+                data_vars[key] = (('time', 'RO'), new_coords[key])
+
+            # Create new Dataset
+            new_set = xr.Dataset(data_vars=data_vars, coords=coords)
+
+            # Copy over other variables
+            for key in output.data_vars:
+                if key not in all_labels:
+                    new_set[key] = output[key]
+
+            # Replace initial Dataset
+            output = new_set
+
         # Use the first available file to pick out meta information
-        profile_meta = pysat.Meta()
         meta = pysat.Meta()
         ind = 0
         repeat = True
@@ -375,7 +541,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 keys = data.variables.keys()
                 for key in keys:
                     if 'units' in data.variables[key].ncattrs():
-                        profile_meta[key] = {
+                        meta[key] = {
                             meta.labels.units: data.variables[key].units,
                             meta.labels.name: data.variables[key].long_name}
                 repeat = False
@@ -383,31 +549,16 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None):
                 # File was empty, try the next one by incrementing ind
                 ind += 1
 
-        meta['profiles'] = profile_meta
         return output, meta
     else:
-        # no data
-        return pds.DataFrame(None), pysat.Meta()
+        # No data.
+        return xr.Dataset(None), pysat.Meta()
 
 
-def _process_lengths(lengths):
-    """Prep lengths for parsing.
-
-    Internal func used by load_files.
-    """
-
-    lengths = lengths.tolist()
-    lengths.insert(0, 0)
-    lengths = np.array(lengths)
-    lengths2 = lengths.copy()
-    lengths[-1] += 1
-    return lengths, lengths2
-
-
-# separate routine for doing actual loading. This was broken off from main load
-# because I was playing around with multiprocessor loading
-# yielded about 20% improvement in execution time
-def load_files(files, tag=None, inst_id=None, altitude_bin=None):
+# Separate routine for doing actual loading. This was broken off from main load
+# because I was playing around with multiprocessor loading.
+# Yielded about 20% improvement in execution time.
+def load_files(files, tag=None, inst_id=None, coords=None):
     """Load COSMIC data files directly from a given list.
 
     May be directly called by user, but in general is called by load.  This is
@@ -422,9 +573,10 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
         tag or None (default=None)
     inst_id : str or NoneType
         satellite id or None (default=None)
-    altitude_bin : int
-        Number of kilometers to bin altitude profiles by when loading.
-        Currently only supported for tag='ionprf'.
+    coords : dict or NoneType
+        Dict keyed by data variable name that stores the coordinate name that
+        should be assigned when loading data. If a variable name not provided
+        will default to 'RO'. (default=None)
 
     Returns
     -------
@@ -434,230 +586,95 @@ def load_files(files, tag=None, inst_id=None, altitude_bin=None):
     """
     output = [None] * len(files)
     drop_idx = []
+
+    if coords is None:
+        coords = {}
+
+    # Dict to store information about each data variable and data lengths
+    # from each file loaded.
     main_dict = {}
     main_dict_len = {}
 
-    safe_keys = []
+    # List of all data variables in the file.
+    data_var_keys = []
+
+    # Iterate through files and load data
     for (i, fname) in enumerate(files):
         try:
+            # Open file for access.
             data = netCDF4.Dataset(fname)
-            # build up dictionary will all ncattrs
-            new = {}
-            # get list of file attributes
-            ncattrsList = data.ncattrs()
-            # these include information about where the profile observed
-            for d in ncattrsList:
-                new[d] = data.getncattr(d)
 
+            # Get list of file attributes, which includes information about
+            # where the profile is observed, and store.
+            ncattrsList = data.ncattrs()
+            file_attrs = {}
+            for d in ncattrsList:
+                file_attrs[d] = data.getncattr(d)
+
+            # Get a list of all data variables from the first file only.
             if i == 0:
-                keys = data.variables.keys()
-                for key in keys:
-                    safe_keys.append(key)
+                for key in data.variables.keys():
+                    data_var_keys.append(key)
                     main_dict[key] = []
                     main_dict_len[key] = []
 
-            # load all of the variables in the netCDF
-            for key in safe_keys:
-                # grab data
+            # Load all of the variables in the netCDF.
+            for key in data_var_keys:
+                # Grab data.
                 t_list = data.variables[key][:]
-                # reverse byte order if needed
+
+                # Reverse byte order if needed and store.
                 if t_list.dtype.byteorder != '=':
                     main_dict[key].append(t_list.byteswap().newbyteorder())
                 else:
                     main_dict[key].append(t_list)
-                # store lengths
+
+                # Store length of data for the file.
                 main_dict_len[key].append(len(main_dict[key][-1]))
 
-            output[i] = new
+            output[i] = file_attrs
             data.close()
+
         except RuntimeError:
-            # some of the files have zero bytes, which causes a read error
-            # this stores the index of these zero byte files so I can drop
-            # the Nones the gappy file leaves behind
+            # Some of the files have zero bytes, which causes a read error.
+            # Store the index of these zero byte files so they can be dropped.
             drop_idx.append(i)
 
-    # drop anything that came from the zero byte files
+    # Drop anything that came from the zero byte files.
     drop_idx.reverse()
     for i in drop_idx:
         del output[i]
 
-    # combine different sub lists in main_dict into one
-    for key in safe_keys:
-        main_dict[key] = np.hstack(main_dict[key])
-        main_dict_len[key] = np.cumsum(main_dict_len[key])
+    # Each GPS occultation has a different number of data points.
+    # Generate numpy arrays based upon the largest size.
+    for key in main_dict_len.keys():
+        main_dict_len[key] = np.max(main_dict_len[key])
 
-    if tag == 'atmprf':
-        # this file has three groups of variable lengths
-        # each goes into its own DataFrame
-        # two are processed here, last is processed like other
-        # file types
-        # see code just after this if block for more
-        # general explanation on lines just below
-        p_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
-        p_dict = {}
-        # get indices needed to parse data
-        p_lens = main_dict_len['OL_vec1']
-        max_p_length = np.max(p_lens)
-        p_lens, p_lens2 = _process_lengths(p_lens)
-        # collect data
-        for key in p_keys:
-            p_dict[key] = main_dict.pop(key)
-            _ = main_dict_len.pop(key)
-        psub_frame = pds.DataFrame(p_dict)
+    for key in main_dict.keys():
+        data_arr = np.full((len(main_dict[key]), main_dict_len[key]), np.nan)
+        for i in range(len(main_dict[key])):
+            data_arr[i, 0:len(main_dict[key][i])] = main_dict[key][i]
 
-        # change in variables in this file type
-        # depending upon the processing applied at UCAR
-        if 'ies' in main_dict.keys():
-            q_keys = ['OL_ipar', 'OL_par', 'ies', 'hes', 'wes']
-        else:
-            q_keys = ['OL_ipar', 'OL_par']
-        q_dict = {}
-        # get indices needed to parse data
-        q_lens = main_dict_len['OL_par']
-        max_q_length = np.max(q_lens)
-        q_lens, q_lens2 = _process_lengths(q_lens)
-        # collect data
-        for key in q_keys:
-            q_dict[key] = main_dict.pop(key)
-            _ = main_dict_len.pop(key)
-        qsub_frame = pds.DataFrame(q_dict)
+        main_dict[key] = data_arr
 
-        max_length = np.max([max_p_length, max_q_length])
-        len_arr = np.arange(max_length)
-
-        # Set small sub DataFrames
-        for i in np.arange(len(output)):
-            output[i]['OL_vecs'] = psub_frame.iloc[p_lens[i]:p_lens[i + 1], :]
-            output[i]['OL_vecs'].index = len_arr[:p_lens2[i + 1] - p_lens2[i]]
-            output[i]['OL_pars'] = qsub_frame.iloc[q_lens[i]:q_lens[i + 1], :]
-            output[i]['OL_pars'].index = len_arr[:q_lens2[i + 1] - q_lens2[i]]
-
-    # create a single data frame with all bits, then
-    # break into smaller frames using views
-    main_frame = pds.DataFrame(main_dict)
-    # get indices needed to parse data
-    lengths = main_dict_len[list(main_dict.keys())[0]]
-    # get largest length and create numpy array with it
-    # used to speed up reindexing below
-    max_length = np.max(lengths)
-    length_arr = np.arange(max_length)
-    # process lengths for ease of parsing
-    lengths, lengths2 = _process_lengths(lengths)
-
-    # Break the main profile data into individual profiles
-    for i in np.arange(len(output)):
-        output[i]['profiles'] = main_frame.iloc[lengths[i]:lengths[i + 1], :]
-        output[i]['profiles'].index = length_arr[:lengths2[i + 1] - lengths2[i]]
-
-    if tag == 'ionprf':
-        if altitude_bin is not None:
-            for out in output:
-                rval = (out['profiles']['MSL_alt'] / altitude_bin).round()
-                out['profiles'].index = rval.values * altitude_bin
-                out['profiles'] = out['profiles'].groupby(
-                    out['profiles'].index.values).mean()
-        else:
-            for out in output:
-                out['profiles'].index = out['profiles']['MSL_alt']
+    # Collect all simple variable output into a Dataset.
+    output = pds.DataFrame(output).to_xarray()
+    for key in main_dict:
+        if key not in coords:
+            coords[key] = 'RO'
+        output[key] = (['index', coords[key]], main_dict[key])
 
     return output
 
 
-def download(date_array, tag, inst_id, data_path=None,
-             user=None, password=None):
-    """Download COSMIC GPS data.
-
-    Parameters
-    ----------
-    date_array : array-like
-        list of datetimes to download data for. The sequence of dates need not
-        be contiguous.
-    tag : str
-        Tag identifier used for particular dataset. This input is provided by
-        pysat. (default='')
-    inst_id : str
-        Instrument ID string identifier used for particular dataset. This input
-        is provided by pysat. (default='')
-    data_path : str
-        Path to directory to download data to. (default=None)
-    user : str or NoneType
-        User string input used for download. Provided by user and passed via
-        pysat. If an account is required for downloads this routine here must
-        error if user not supplied. (default=None)
-    password : str or NoneType
-        Password for data download. (default=None)
-
-    Note
-    ----
-    This routine is invoked by pysat and is not intended for direct use by
-    the end user.
-
-    """
-    global l1_tags, lower_l1_tags, l2_tags, lower_l2_tags
-
-    if tag in lower_l2_tags:
-        level_str = 'level2'
-        matches = [utag for ltag, utag in zip(lower_l2_tags, l2_tags)
-                   if tag == ltag]
-        sub_str = matches[0]
-    elif tag in lower_l1_tags:
-        level_str = 'level1b'
-        matches = [utag for ltag, utag in zip(lower_l1_tags, l1_tags)
-                   if tag == ltag]
-        sub_str = matches[0]
-
-    for date in date_array:
-        logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        yrdoystr = '{year:04d}/{doy:03d}'.format(year=yr, doy=doy)
-
-        # Try re-processed data (preferred)
-        try:
-            # Construct path string for online file
-            dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                             "/repro2013/", level_str, "/", yrdoystr, "/",
-                             sub_str, '_repro2013',
-                             '_{year:04d}_{doy:03d}.tar.gz'.format(year=yr,
-                                                                   doy=doy)))
-            # Make online connection
-            req = requests.get(dwnld)
-            req.raise_for_status()
-        except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
-            try:
-                # Construct path string for online file
-                dwnld = ''.join(("https://data.cosmic.ucar.edu/gnss-ro/cosmic1",
-                                 "/postProc/", level_str, "/", yrdoystr, "/",
-                                 sub_str, '_postProc',
-                                 '_{year:04d}_{doy:03d}.tar.gz'))
-                dwnld = dwnld.format(year=yr, doy=doy)
-
-                # Make online connection
-                req = requests.get(dwnld)
-                req.raise_for_status()
-            except requests.exceptions.HTTPError as err:
-                estr = ''.join((str(err), '\n', 'Data not found'))
-                logger.info(estr)
-
-        # Copy request info to tarball file with generated name in `fname`.
-        fname = os.path.join(data_path,
-                             ''.join(('cosmic_', sub_str,
-                                      '_{year:04d}.{doy:03d}.tar')))
-        fname = fname.format(year=yr, doy=doy)
-        with open(fname, "wb") as local_file:
-            local_file.write(req.content)
-            local_file.close()
-        try:
-            # Uncompress files and remove tarball
-            tar = tarfile.open(fname)
-            tar.extractall(path=os.path.join(data_path, yrdoystr))
-            tar.close()
-
-        except tarfile.ReadError:
-            # If file cannot be read as a tarfile, then data does not exist.
-            # Skip this day since there is nothing left to do.
-            pass
-        # tar file must be removed (even if download fails)
-        os.remove(fname)
-
-    return
+# Use general CDAAC download routine.
+download_tags = {
+    '': {tag:
+         {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
+                                 tag_translation[tag]['level'],
+                                 '/{year:4d}/{day:03d}/')),
+          'tar_name': ''.join((tag_translation[tag]['substr'],
+                               '_repro2013_{year:4d}_{day:03d}.tar.gz')),
+          'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
+download = functools.partial(mm_cdaac.download, supported_tags=download_tags,
+                             sub_path=True)
