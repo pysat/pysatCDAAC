@@ -531,6 +531,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
         meta = pysat.Meta()
         ind = 0
         repeat = True
+        # Map netcdf keys to pysat meta labels
+        label_map = {meta.labels.units: 'units',
+                     meta.labels.name: 'long_name',
+                     meta.labels.fill_val: '_FillValue'}
         while repeat:
             try:
                 data = netCDF4.Dataset(fnames[ind])
@@ -540,14 +544,29 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
                                meta.labels.name: d}
                 keys = data.variables.keys()
                 for key in keys:
-                    if 'units' in data.variables[key].ncattrs():
-                        meta[key] = {
-                            meta.labels.units: data.variables[key].units,
-                            meta.labels.name: data.variables[key].long_name}
+                    meta_dict = {}
+                    # Build meta dictionary for each key
+                    for label in label_map.keys():
+                        if label_map[label] in data.variables[key].ncattrs():
+                            meta_dict[label] = getattr(data.variables[key],
+                                                       label_map[label])
+                    # Apply dictionary to meta
+                    if len(meta_dict.keys()) > 0:
+                        if key == 'time':
+                            # The time variable is renamed profile_time for
+                            # pysat compatibility.
+                            meta['profile_time'] = meta_dict
+                        else:
+                            meta[key] = meta_dict
                 repeat = False
             except RuntimeError:
                 # File was empty, try the next one by incrementing ind
                 ind += 1
+
+        # Check if binning was used and port over metadata.
+        if 'MSL_bin_alt' in output.coords:
+            meta['MSL_bin_alt'] = meta['MSL_alt']
+            meta['MSL_bin_alt'][meta.labels.notes] = 'Binned by pysatCDAAC'
 
         return output, meta
     else:
