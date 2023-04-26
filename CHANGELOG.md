@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.0.X] - 2023-XX-XX
 * Bug fixes
   * Update metadata transfer for cosmic gps
+* Maintenance
+  * Update Github Actions standards
 
 ## [0.0.3] - 2022-12-12
 * Updated `cosmic_gps` to support xarray Datasets
