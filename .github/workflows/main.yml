@@ -30,10 +30,7 @@ jobs:
 
     - name: Install NEP29 dependencies
       if: ${{ matrix.numpy_ver != 'latest'}}
-      run: |
-        pip install --no-binary :numpy: numpy==${{ matrix.numpy_ver }}
-        # Need to force install of pandas compliant with NEP29
-        pip install "pandas<1.5"
+      run: pip install --no-cache-dir numpy==${{ matrix.numpy_ver }}
 
     - name: Install standard dependencies
       run: |
