@@ -5,8 +5,14 @@ COSMIC instruments and missions archived at the CDAAC web portal.
 
 """
 
-import pkg_resources
+import importlib
+import importlib_metadata
 
 from pysatCDAAC import instruments  # noqa F401
 
-__version__ = pkg_resources.get_distribution('pysatCDAAC').version
+# set version
+try:
+    __version__ = importlib.metadata.version('pysatNASA')
+except AttributeError:
+    # Python 3.6 requires a different version
+    __version__ = importlib_metadata.version('pysatNASA')
