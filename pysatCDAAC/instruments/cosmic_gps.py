@@ -90,6 +90,21 @@ tag_translation = {'ionphs': {'level': 'level1b', 'substr': 'ionPhs'},
                    'atmprf': {'level': 'level2', 'substr': 'atmPrf'},
                    'eraprf': {'level': 'level2', 'substr': 'eraPrf'},
                    'gfsprf': {'level': 'level2', 'substr': 'gfsPrf'}}
+
+coord_translation = {
+    'ionprf': ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi'],
+    'atmprf': ['MSL_alt', 'Lat', 'Lon', 'Azim'],
+    'sonprf': ['MSL_alt', 'lat', 'lon'],
+    'wetprf': ['MSL_alt', 'Lat', 'Lon'],
+    'eraprf': ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'gfsprf': ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref'],
+    'ionphs': ['caL1Snr', 'pL1Snr', 'pL2Snr', 'xLeo', 'yLeo', 'zLeo', 'xdLeo',
+               'ydLeo', 'zdLeo', 'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps',
+               'zdGps', 'exL1', 'exL2'],
+    'podtec': ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO', 'z_LEO', 'TEC',
+               'elevation', 'caL1_SNR', 'pL2_SNR', 'profile_time'],
+    'scnlv1': ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']}
+
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
@@ -152,14 +167,14 @@ def clean(self):
             # Filter densities when negative.
             dens_copy = self['ELEC_dens'].values
             for i, profile in enumerate(self['time']):
-                # Take out all densities below any altitude (< 325) with
+                # Take out all densities below any altitude (< 325 km) with
                 # a negative density.
                 idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
                                 & (self[i, :, 'MSL_alt'] <= 325))
                 if len(idx) > 0:
                     dens_copy[i, 0:idx[-1] + 1] = np.nan
 
-                # Take out all densities above any altitude > 325 with a
+                # Take out all densities above any altitude > 325 km with a
                 # negative density.
                 idx, = np.where((self[i, :, 'ELEC_dens'] < 0)
                                 & (self[i, :, 'MSL_alt'] > 325))
@@ -180,7 +195,7 @@ def clean(self):
             self.data = self.data.where(normGrad <= 1.)
 
     elif self.tag == 'scnlv1':
-        # scintillation files
+        # Scintillation files
         if self.clean_level == 'clean':
             # Filter out profiles where source provider processing doesn't work.
             self.data = self.data.where(self['alttp_s4max'] != -999., drop=True)
@@ -320,7 +335,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
     altitude_bin : int or NoneType
         Number of kilometers to bin altitude profiles by when loading.
         Works for all files except tag='scnlv1', 'podtec', or 'ionphs' as
-        `MSL_alt` is required in the file. If None, no binnin performed.
+        `MSL_alt` is required in the file. If None, no binning performed.
         (default=None)
     altitude_bin_num : int
         Number of bins to use when binning profile altitude if
@@ -345,10 +360,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
     num = len(fnames)
     # Make sure there are files to read.
     if num != 0:
-
-        # Set up loading files with a mixture of data lengths.
+        coords = {}
+        # Specify additional coords for datasets with nonstandard dimensions.
         if tag == 'atmprf':
-            coords = {}
             temp_keys = ['OL_vec2', 'OL_vec1', 'OL_vec3', 'OL_vec4']
             dim_label = 'dim1'
             for key in temp_keys:
@@ -358,9 +372,6 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
             dim_label = 'dim2'
             for key in temp_keys:
                 coords[key] = dim_label
-        else:
-            # All other files have a single 2D dimension
-            coords = {}
 
         # Call generalized load_files routine.
         output = load_files(fnames, tag=tag, inst_id=inst_id, coords=coords)
@@ -398,11 +409,11 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
             utsec += output.prn_id * 1.e-2 + output.duration.astype(int) * 1.E-6
             utsec += output.antenna_id * 1.E-7
 
-        output['index'] = \
-            pysat.utils.time.create_datetime_index(year=output.year.values,
-                                                   month=output.month.values,
-                                                   day=output.day.values,
-                                                   uts=utsec.values)
+        output['index'] = pysat.utils.time.create_datetime_index(
+            year=output.year.values,
+            month=output.month.values,
+            day=output.day.values,
+            uts=utsec.values)
 
         # Rename index to time.
         if tag_translation[tag]['level'] == 'level1b':
@@ -414,30 +425,7 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
         output = output.sortby('time')
 
         # Set up coordinates, depending upon file type.
-        if tag == 'ionprf':
-            coord_labels = ['MSL_alt', 'GEO_lat', 'GEO_lon', 'OCC_azi']
-        elif tag == 'atmprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Azim']
-        elif tag == 'sonprf':
-            coord_labels = ['MSL_alt', 'lat', 'lon']
-        elif tag == 'wetprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon']
-        elif tag == 'eraprf':
-            coord_labels = ['MSL_alt', 'Lat', 'Lon', 'Pres', 'Temp', 'Vp',
-                            'Ref']
-        elif tag == 'gfsprf':
-            coord_labels = ['MSL_alt', 'Pres', 'Temp', 'Vp', 'Ref']
-        elif tag == 'ionphs':
-            coord_labels = ['caL1Snr', 'pL1Snr', 'pL2Snr',
-                            'xLeo', 'yLeo', 'zLeo', 'xdLeo', 'ydLeo', 'zdLeo',
-                            'xGps', 'yGps', 'zGps', 'xdGps', 'ydGps', 'zdGps',
-                            'exL1', 'exL2']
-        elif tag == 'podtec':
-            coord_labels = ['x_GPS', 'y_GPS', 'z_GPS', 'x_LEO', 'y_LEO',
-                            'z_LEO', 'TEC', 'elevation', 'caL1_SNR', 'pL2_SNR',
-                            'profile_time']
-        elif tag == 'scnlv1':
-            coord_labels = ['alt_s4max', 'lat_s4max', 'lon_s4max', 'lct_s4max']
+        coord_labels = coord_translation[tag]
 
         # Apply coordinates to loaded data.
         output = output.set_coords(coord_labels)
@@ -512,9 +500,9 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
                     # Average all values in each bin. Guard against first
                     # realized bin being larger than first possible bin.
                     ir = dig_bins[i, 0] - 1
-                    new_coords[label][i, ir:len(temp_calc) + ir] = \
-                        [np.mean(temp_vals)
-                         for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
+                    new_coords[label][i, ir:len(temp_calc) + ir] = [
+                        np.mean(temp_vals)
+                        for temp_vals in temp_calc][:len(bin_arr) - ir - 1]
 
             # Create new Dataset with binned data values.
             # First, prep coordinate data.
@@ -543,6 +531,10 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
         meta = pysat.Meta()
         ind = 0
         repeat = True
+        # Map netcdf keys to pysat meta labels
+        label_map = {meta.labels.units: 'units',
+                     meta.labels.name: 'long_name',
+                     meta.labels.fill_val: '_FillValue'}
         while repeat:
             try:
                 data = netCDF4.Dataset(fnames[ind])
@@ -552,14 +544,29 @@ def load(fnames, tag=None, inst_id=None, altitude_bin=None,
                                meta.labels.name: d}
                 keys = data.variables.keys()
                 for key in keys:
-                    if 'units' in data.variables[key].ncattrs():
-                        meta[key] = {
-                            meta.labels.units: data.variables[key].units,
-                            meta.labels.name: data.variables[key].long_name}
+                    meta_dict = {}
+                    # Build meta dictionary for each key
+                    for label in label_map.keys():
+                        if label_map[label] in data.variables[key].ncattrs():
+                            meta_dict[label] = getattr(data.variables[key],
+                                                       label_map[label])
+                    # Apply dictionary to meta
+                    if len(meta_dict.keys()) > 0:
+                        if key == 'time':
+                            # The time variable is renamed profile_time for
+                            # pysat compatibility.
+                            meta['profile_time'] = meta_dict
+                        else:
+                            meta[key] = meta_dict
                 repeat = False
             except RuntimeError:
                 # File was empty, try the next one by incrementing ind
                 ind += 1
+
+        # Check if binning was used and port over metadata.
+        if 'MSL_bin_alt' in output.coords:
+            meta['MSL_bin_alt'] = meta['MSL_alt']
+            meta['MSL_bin_alt'][meta.labels.notes] = 'Binned by pysatCDAAC'
 
         return output, meta
     else:
@@ -679,12 +686,14 @@ def load_files(files, tag=None, inst_id=None, coords=None):
     return output
 
 
-download_tags = \
-    {'': {tag:
-          {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
-                                  tag_translation[tag]['level'],
-                                  '/{year:4d}/{day:03d}/')),
-           'tar_name': ''.join((tag_translation[tag]['substr'],
+# Use general CDAAC download routine.
+download_tags = {
+    '': {tag:
+         {'remote_dir': ''.join(('gnss-ro/cosmic1/repro2013/',
+                                 tag_translation[tag]['level'],
+                                 '/{year:4d}/{day:03d}/')),
+          'tar_name': ''.join((tag_translation[tag]['substr'],
                                '_repro2013_{year:4d}_{day:03d}.tar.gz')),
-           'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
-download = functools.partial(mm_cdaac.download, supported_tags=download_tags)
+          'backup': ['repro2013', 'postProc']} for tag in tags.keys()}}
+download = functools.partial(mm_cdaac.download, supported_tags=download_tags,
+                             sub_path=True)

@@ -5,12 +5,13 @@ import os
 import requests
 import tarfile
 import tempfile
+import warnings
 
 import pysat
 
 
 def download(date_array, tag, inst_id, supported_tags=None,
-             data_path=None, user=None, password=None):
+             data_path=None, sub_path=False, user=None, password=None):
     """Download data from CDAAC https server.
 
     Parameters
@@ -30,7 +31,10 @@ def download(date_array, tag, inst_id, supported_tags=None,
         functools.partial then assigned to new instrument code.
         (default=None)
     data_path : str
-        Path to directory to download data to. (default=None)
+        Path to directory to download data to. (default='')
+    sub_path : bool
+        If True, break up data into further subdirectories based on date.
+        (default=False)
     user : str or NoneType
         User string input used for download. Provided by user and passed via
         pysat. If an account is required for downloads this routine here must
@@ -48,22 +52,15 @@ def download(date_array, tag, inst_id, supported_tags=None,
     # Set up temporary directory for tar files
     temp_dir = tempfile.TemporaryDirectory()
 
-    if tag is None:
-        tag = ''
-    if inst_id is None:
-        inst_id = ''
-    try:
-        inst_dict = supported_tags[inst_id][tag]
-    except KeyError:
-        raise ValueError('inst_id / tag combo unknown.')
+    inst_dict = supported_tags[inst_id][tag]
 
     for date in date_array:
         pysat.logger.info('Downloading COSMIC data for ' + date.strftime('%D'))
         yr, day = pysat.utils.time.getyrdoy(date)
         yrdoystr = '{year:04d}/{day:03d}'.format(year=yr, day=day)
 
-        # Try re-processed data (preferred).
-        # Construct path string for online file.
+        # Try re-processed data (preferred). Construct a path string for the
+        # online file.
         dwnld = ''.join(("https://data.cosmic.ucar.edu/",
                          inst_dict['remote_dir'],
                          inst_dict['tar_name']))
@@ -73,8 +70,8 @@ def download(date_array, tag, inst_id, supported_tags=None,
             with requests.get(dwnld) as req:
                 req.raise_for_status()
         except requests.exceptions.HTTPError:
-            # If response is negative, try post-processed data
-            # Construct path string for online file
+            # If response is negative, try post-processed data. Construct
+            # a path string for the online file
             if 'backup' in inst_dict.keys():
                 # If a backup exists, try alternate form
                 dwnld = dwnld.replace(inst_dict['backup'][0],
@@ -96,14 +93,37 @@ def download(date_array, tag, inst_id, supported_tags=None,
         try:
             # Uncompress files and remove tarball
             tar = tarfile.open(fname)
-            tar.extractall(path=os.path.join(data_path, yrdoystr))
+            if sub_path:
+                # Send to subdirectory.
+                tar.extractall(path=os.path.join(data_path, yrdoystr))
+            else:
+                # Send to top level.
+                tar.extractall(path=data_path)
             tar.close()
 
         except tarfile.ReadError:
             # If file cannot be read as a tarfile, then data does not exist.
             # Skip this day since there is nothing left to do.
             pass
-    # tar file must be removed (even if download fails)
+
+    # Remove the temporary directory (even if download fails)
     temp_dir.cleanup()
+
+    return
+
+
+def clean_warn(self):
+    """Warn user that cleaning not yet available for this data set.
+
+    Note
+    ----
+    'clean' - Not specified
+    'dusty' - Not specified
+    'dirty' - Not specified
+    'none'  No cleaning applied, routine not called in this case.
+
+    """
+    warnings.warn(' '.join(('No cleaning routines available for',
+                            self.platform, self.name)))
 
     return
