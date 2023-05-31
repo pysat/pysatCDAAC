@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Added altitude binning profile support for all datasets with altitude
   as a variable.
 * Added `download` to general methods
+* Update links in documentation
 * Added support for `cosmic2_ivm`
 * Maintenance
   * Update links in documentation
@@ -21,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   * Add workflow for testing with pysat RC
   * Updated instrument tests to use pysat 3.0.2 syntax
   * Added clean warning routine to `methods.general`
+  * Implement pyproject.toml
 
 ## [0.0.2] - 2021-07-07
 * Update instrument style for pysat 3.0.0

@@ -36,7 +36,7 @@ a local install use the "--user" flag after "install".
 
 ```
 cd pysatCDAAC/
-python setup.py install
+pip install .
 ```
 
 Note: pre-1.0.0 version
