@@ -10,7 +10,7 @@ import importlib_metadata
 
 from pysatCDAAC import instruments  # noqa F401
 
-# set version
+# Set version
 try:
     __version__ = importlib.metadata.version('pysatCDAAC')
 except AttributeError:
