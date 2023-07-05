@@ -6,7 +6,7 @@ Welcome to the pysatCDAAC documentation
 
 This documentation describes the pysatCDAAC module, which contains
 routines to space science data hosted at the COSMIC Data Analysis and Archive
-Center (CDAAC)as pysat.Instrument objects.
+Center (CDAAC) as pysat.Instrument objects.
 
 .. toctree::
    :maxdepth: -1
