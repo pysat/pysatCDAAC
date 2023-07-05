@@ -5,7 +5,7 @@ This is a library of ``pysat`` instrument modules and methods designed to suppor
 NASA instruments and missions archived at the Community Data Analysis Web
 portal.
 
-.. image:: figures/pysatCDAAC_logo.png
+.. image:: figures/logo.png
     :width: 400px
     :align: center
     :alt: pysatNASA Logo, a blue planet with multiple orbiting pythons and the module name superimposed

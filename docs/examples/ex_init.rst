@@ -1,5 +1,5 @@
 Loading COSMIC2 IVM data
-=====================
+========================
 
 pysatCDAAC uses `pysat <https://github.com/pysat/pysat>`_ to load
 space science instrument data.  As specified in the

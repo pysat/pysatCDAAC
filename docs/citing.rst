@@ -7,7 +7,7 @@ Specifying which version of pysatCDAAC used will also improve the
 reproducibility of your presented results.
 
 pysatCDAAC
----------
+----------
 
 The most recent citation can be found at `Zenodo
 <https://zenodo.org/record/3986131>`_.  The examples here are from the first
