@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pysatCDAAC"
-version = "0.0.3"
+version = "0.0.4"
 description = "pysat support for CDAAC Instruments"
 readme = "README.md"
 requires-python = ">=3.6"
@@ -60,6 +60,7 @@ doc = [
   "m2r2",
   "numpydoc",
   "sphinx",
+  "sphinx-autoapi",
   "sphinx_rtd_theme"
 ]
 
