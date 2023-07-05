@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Maintenance
   * Update Github Actions standards
   * Added support for readthedocs
+  * Cleaned up contributing guidelines based on latest project standards
 
 ## [0.0.3] - 2022-12-12
 * Updated `cosmic_gps` to support xarray Datasets
