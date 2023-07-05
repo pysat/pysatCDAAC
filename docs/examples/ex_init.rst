@@ -16,11 +16,11 @@ Meter on board the Ionospheric CONnection Explorer `(ICON) <https://www.nasa.gov
 
    pysat.utils.registry.register_by_module(py_cdaac.instruments)
 
-   old_time = dt.datetime(2021, 1, 1)
+   date = dt.datetime(2021, 1, 1)
    ivm = pysat.Instrument(platform='cosmic2', name='ivm',
                           inst_id='e1', update_files=True)
-   ivm.download(start=old_time)
-   ivm.load(date=old_time)
+   ivm.download(start=date)
+   ivm.load(date=date)
    print(ivm)
 
 
@@ -31,44 +31,38 @@ information about the data loaded.
 
   pysat Instrument object
   -----------------------
-  Platform: 'icon'
+  Platform: 'cosmic2'
   Name: 'ivm'
   Tag: ''
-  Instrument id: 'a'
+  Instrument id: 'e1'
 
   Data Processing
   ---------------
   Cleaning Level: 'clean'
   Data Padding: None
-  Keyword Arguments Passed to list_files: {}
-  Keyword Arguments Passed to load: {}
-  Keyword Arguments Passed to preprocess: {}
-  Keyword Arguments Passed to download: {}
-  Keyword Arguments Passed to list_remote_files: {}
-  Keyword Arguments Passed to clean: {}
-  Keyword Arguments Passed to init: {}
   Custom Functions: 0 applied
 
   Local File Statistics
   ---------------------
-  Number of files: 402
-  Date Range: 22 October 2019 --- 29 December 2020
+  Number of files: 2
+  Date Range: 01 January 2021 --- 02 January 2021
 
   Loaded Data Statistics
   ----------------------
-  Date: 01 January 2020
+  Date: 01 January 2021
   DOY: 001
-  Time range: 31 December 2019 23:59:57 --- 01 January 2020 23:59:55
-  Number of Times: 86400
-  Number of variables: 91
+  Time range: 01 January 2021 00:00:01 --- 02 January 2021 00:00:00
+  Number of Times: 85276
+  Number of variables: 46
 
   Variable Names:
-  A_Activity          A_Status            Altitude
-                          ...
-  Unit_Vector_Zonal_X Unit_Vector_Zonal_Y Unit_Vector_Zonal_Z
+  alt        ap_pot     ap_pot_var
+                 ...
+  rpa_flag   sc_flag    uts
 
   pysat Meta object
   -----------------
-  Tracking 21 metadata values
-  Metadata for 92 standard variables
+  Tracking 7 metadata values
+  Metadata for 46 standard variables
   Metadata for 0 ND variables
+  Metadata for 6 global attributes
