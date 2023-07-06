@@ -20,7 +20,8 @@ is used as an example.
 
    date = dt.datetime(2021, 1, 1)
    ivm = pysat.Instrument(platform='cosmic2', name='ivm',
-                          inst_id='e1', update_files=True)
+                          inst_id='e1', update_files=True,
+                          use_header=True)
    ivm.download(start=date)
    ivm.load(date=date)
    print(ivm)
