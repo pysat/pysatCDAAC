@@ -5,7 +5,9 @@ pysatCDAAC uses `pysat <https://github.com/pysat/pysat>`_ to load
 space science instrument data.  As specified in the
 `pysat tutorial <https://pysat.readthedocs.io/en/latest/tutorial.html>`_,
 data may be loaded using the following commands.  Data from the Ion Velocity
-Meter on board the Ionospheric CONnection Explorer `(ICON) <https://www.nasa.gov/icon>`_ is used as an example.
+Meter on board the Constellation Observing System for Meteorology Ionosphere
+and Climate `(COSMIC-2) <https://www.cosmic.ucar.edu/what-we-do/cosmic-2/data>`_
+is used as an example.
 
 ::
 

@@ -1,9 +1,9 @@
 Overview
 ========
 
-This is a library of ``pysat`` instrument modules and methods designed to support
-NASA instruments and missions archived at the Community Data Analysis Web
-portal.
+This is a library of ``pysat`` instrument modules and methods designed to
+support NASA instruments and missions archived at the Community Data Analysis
+Web portal.
 
 .. image:: figures/logo.png
     :width: 400px
