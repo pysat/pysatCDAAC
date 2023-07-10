@@ -21,7 +21,7 @@ Short version
 Bug reports
 -----------
 
-When [reporting a bug](https://github.com/pysat/pysatNASA/issues) please
+When [reporting a bug](https://github.com/pysat/pysatCDAAC/issues) please
 include:
 
 * Your operating system name and version
@@ -34,7 +34,7 @@ Feature requests and feedback
 -----------------------------
 
 The best way to send feedback is to file an issue at
-[GitHub](https://github.com/pysat/pysatNASA/issues).
+[GitHub](https://github.com/pysat/pysatCDAAC/issues).
 
 If you are proposing a feature:
 
@@ -71,8 +71,8 @@ To set up `pysatCDAAC` for local development:
   for more information on triggering these standard tests.
 
   Tests for custom functions should be added to the appropriately named file
-  in ``pysatNASA/tests``.  For example, custom functions for the OMNI HRO data
-  are tested in ``pysatNASA/tests/test_omni_hro.py``.  If no test file exists,
+  in ``pysatCDAAC/tests``.  For example, custom instrument functions are
+  tested in ``pysatCDAAC/tests/test_instruments.py``.  If no test file exists,
   then you should create one.  This testing uses pytest, which will run tests
   on any python file in the test directory that starts with ``test``.  Classes
   must begin with ``Test``, and methods must begin with ``test`` as well.
