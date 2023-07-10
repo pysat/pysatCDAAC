@@ -8,4 +8,4 @@ portal.
 .. image:: figures/logo.png
     :width: 400px
     :align: center
-    :alt: pysatNASA Logo, a blue planet with multiple orbiting pythons and the module name superimposed
+    :alt: pysatCDAAC Logo, a blue planet with multiple orbiting pythons and the module name superimposed
