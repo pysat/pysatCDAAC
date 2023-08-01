@@ -29,7 +29,7 @@ Warnings
 Note
 ----
 Since all six spacecarft are stored in a single zip file at the server, users
-need only invoke download for one of the spacecraft (ie, 'e1'). All others will
+need only invoke download for one of the spacecraft (i.e., 'e1'). All others will
 be updated accordingly.
 
 

@@ -4,9 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.0.4] - 2023-08-11
 * Bug fixes
-  * Update metadata transfer for cosmic gps
+  * Update metadata transfer for COSMIC GPS
 * Maintenance
-  * Update Github Actions standards
+  * Update GitHub Actions standards
   * Added support for readthedocs
   * Cleaned up contributing guidelines based on latest project standards
   * Update links in documentation
