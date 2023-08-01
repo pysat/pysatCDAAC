@@ -16,7 +16,8 @@ sphinx:
    configuration: docs/conf.py
 
 
-# Optionally declare the Python requirements required to build your docs
+# Declare the Python requirements required to build your docs
+# This method includes a local build of the package
 python:
    install:
     - method: pip
