@@ -37,4 +37,4 @@ jobs:
     - name: Check that install imports correctly
       run: |
         cd ..
-        python -c "import pysatNASA; print(pysatCDAAC.__version__)"
+        python -c "import pysatCDAAC; print(pysatCDAAC.__version__)"
