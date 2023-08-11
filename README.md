@@ -1,6 +1,6 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="https://raw.githubusercontent.com/pysat/pysatCDAAC/main/logo.png" alt="pysat" title="pysatCDAAC"</img>
+        <img width="20%" src="https://raw.githubusercontent.com/pysat/pysatCDAAC/main/docs/figures/logo.png" alt="pysat" title="pysatCDAAC"</img>
 </div>
 
 # pysatCDAAC: pysat support for COSMIC Data Analysis and Archive Center instruments
@@ -17,11 +17,11 @@ Python 3.7+.
 
 | Common modules | Community modules |
 | -------------- | ----------------- |
-| netCDF4        | pysat>=3.0.3      |
+| netCDF4        | pysat>=3.0.4      |
 | numpy          |                   |
 | pandas         |                   |
 | requests       |                   |
-
+| xarray         |                   |
 
 # Installation
 
@@ -36,7 +36,7 @@ a local install use the "--user" flag after "install".
 
 ```
 cd pysatCDAAC/
-python setup.py install
+pip install .
 ```
 
 Note: pre-1.0.0 version

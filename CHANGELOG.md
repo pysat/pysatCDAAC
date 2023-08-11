@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.4] - 2023-08-11
+* Bug fixes
+  * Update metadata transfer for COSMIC GPS
+* Maintenance
+  * Update GitHub Actions standards
+  * Added support for readthedocs
+  * Cleaned up contributing guidelines based on latest project standards
+  * Update links in documentation
+  * Implement pyproject.toml
+
 ## [0.0.3] - 2022-12-12
 * Updated `cosmic_gps` to support xarray Datasets
 * Added altitude binning profile support for all datasets with altitude

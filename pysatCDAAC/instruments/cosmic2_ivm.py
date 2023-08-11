@@ -20,9 +20,18 @@ tag
 inst_id
     ['e1', 'e2', 'e3', 'e4', 'e5', 'e6']
 
+
 Warnings
 --------
 - Routine was not produced by COSMIC team
+
+
+Note
+----
+Since all six spacecarft are stored in a single zip file at the server, users
+need only invoke download for one of the spacecraft (i.e., 'e1'). All others
+will be updated accordingly.
+
 
 """
 
