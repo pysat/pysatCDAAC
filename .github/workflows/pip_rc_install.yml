@@ -28,3 +28,13 @@ jobs:
 
     - name: Install pysatCDAAC RC
       run: pip install --no-deps --pre -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pysatCDAAC
+
+    - name: Set up pysat
+      run: |
+        mkdir pysatData
+        python -c "import pysat; pysat.params['data_dirs'] = 'pysatData'"
+
+    - name: Check that install imports correctly
+      run: |
+        cd ..
+        python -c "import pysatCDAAC; print(pysatCDAAC.__version__)"
