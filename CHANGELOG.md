@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.5] - 202X-XX-XX
+* Maintenance
+  * Update GitHub Actions standards
+
 ## [0.0.4] - 2023-08-11
 * Bug fixes
   * Update metadata transfer for COSMIC GPS
