@@ -266,7 +266,9 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     stored = futils.parse_fixed_width_filenames(files, format_str)
 
     # Process info
-    if len(stored['year']) > 0:
+    # Check on length for backward compat with pysat 3.1.0
+    # TODO(#51): Can be removed after 3.2.0 release and minimum version is set.
+    if stored['year'] is not None and len(stored['year']) > 0:
         year = np.array(stored['year'])
         day = np.array(stored['day'])
         hour = np.array(stored['hour'])
