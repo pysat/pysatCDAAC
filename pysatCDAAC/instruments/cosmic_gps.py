@@ -110,7 +110,7 @@ coord_translation = {
 
 _test_dates = {'': {tag: dt.datetime(2014, 5, 1) for tag in inst_ids['']}}
 
-# TODO(#TBD): Remove when compliant with multi-day load tests
+# TODO(#51): Remove when compliant with multi-day load tests
 _new_tests = {'': {tag: False for tag in inst_ids['']}}
 
 # ----------------------------------------------------------------------------
