@@ -108,7 +108,10 @@ coord_translation = {
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2014, 5, 1))}
+_test_dates = {'': {tag: dt.datetime(2014, 5, 1) for tag in inst_ids['']}}
+
+# TODO(#TBD): Remove when compliant with multi-day load tests
+_new_tests = {'': {tag: False for tag in inst_ids['']}}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
