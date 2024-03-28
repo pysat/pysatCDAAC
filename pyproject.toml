@@ -39,7 +39,7 @@ dependencies = [
   "netCDF4",
   "numpy",
   "pandas",
-  "pysat >= 3.0.4",
+  "pysat >= 3.0.4, <3.2.0",
   "requests",
   "xarray"
 ]
@@ -61,7 +61,7 @@ doc = [
   "numpydoc",
   "sphinx < 7.0",
   "sphinx-autoapi",
-  "sphinx_rtd_theme >= 1.2.2"
+  "sphinx_rtd_theme >= 1.2.2, <2.0.0"
 ]
 
 [project.urls]
