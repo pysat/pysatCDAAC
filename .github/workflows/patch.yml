@@ -52,6 +52,18 @@ jobs:
       if: ${{ matrix.test_config == 'latest'}}
       run: pip install .[test]
 
+    - name: Remove pysat
+      run: |
+        pip uninstall pysat
+    
+    - name: Install pysat patch-develop from source
+      run: |
+        git clone https://github.com/pysat/pysat.git
+        cd pysat
+        git checkout patch-develop
+        pip install -e .
+        cd ..
+
     - name: Set up pysat
       run: |
         mkdir pysatData
