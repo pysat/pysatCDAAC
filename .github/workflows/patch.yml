@@ -54,7 +54,7 @@ jobs:
 
     - name: Remove pysat
       run: |
-        pip uninstall pysat
+        pip uninstall -y pysat
     
     - name: Install pysat patch-develop from source
       run: |
