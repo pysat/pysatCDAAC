@@ -67,7 +67,7 @@ class TestInstruments(clslib.InstLibTests):
         rem = np.remainder(self.test_inst['MSL_bin_alt'].values, 5)
         idx, idy, = np.where(rem == 0)
         idx2, idy2, = np.where(np.isnan(rem))
-        assert len(idx) + len(idx2) == np.product(rem.shape)
+        assert len(idx) + len(idx2) == np.prod(rem.shape)
 
         # Confirm length of each profile corresponds to bin_num
         assert self.test_inst.data.dims['RO'] == bin_num
