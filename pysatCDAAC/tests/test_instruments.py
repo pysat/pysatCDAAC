@@ -70,6 +70,6 @@ class TestInstruments(clslib.InstLibTests):
         assert len(idx) + len(idx2) == np.prod(rem.shape)
 
         # Confirm length of each profile corresponds to bin_num
-        assert self.test_inst.data.sizes['RO'] == bin_num
+        assert self.test_inst.data.dims['RO'] == bin_num
 
         return
