@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Maintenance
   * Update GitHub Actions standards
   * Add compatibility for numpy version>=3.2.0
+  * Update usage of 'Dataset.dims' to 'Dataset.sizes'
 
 ## [0.0.4] - 2023-08-11
 * Bug fixes
