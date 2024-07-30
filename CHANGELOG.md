@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.0.5] - 202X-XX-XX
 * Maintenance
   * Update GitHub Actions standards
-  * Add compatibility for numpy version>=3.2.o
+  * Add compatibility for numpy version>=3.2.0
 
 ## [0.0.4] - 2023-08-11
 * Bug fixes
