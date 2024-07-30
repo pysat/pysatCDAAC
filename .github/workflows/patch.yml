@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Pytest with Flake8 (patch-develop pysat ver)
+name: Pytest with Flake8
 
 on: [push, pull_request]
 
@@ -12,12 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.11", "3.12"]
         numpy_ver: ["latest"]
         test_config: ["latest"]
         include:
-          - python-version: "3.9"
-            numpy_ver: "1.21"
+          - python-version: "3.10"
+            numpy_ver: "1.24"
             os: ubuntu-latest
             test_config: "NEP29"
           - python-version: "3.6.8"
@@ -28,9 +28,9 @@ jobs:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy_ver }}
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -52,17 +52,10 @@ jobs:
       if: ${{ matrix.test_config == 'latest'}}
       run: pip install .[test]
 
-    - name: Remove pysat
+    - name: Switch to patched pysat version
       run: |
         pip uninstall -y pysat
-    
-    - name: Install pysat patch-develop from source
-      run: |
-        git clone https://github.com/pysat/pysat.git
-        cd pysat
-        git checkout patch-develop
-        pip install -e .
-        cd ..
+        pip install -i https://test.pypi.org/simple/ pysat==3.2.1rc2
 
     - name: Set up pysat
       run: |
@@ -81,4 +74,17 @@ jobs:
     - name: Publish results to coveralls
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
       run: coveralls --rcfile=pyproject.toml --service=github
+
+  finish:
+    name: Finish Coverage Analysis
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        pip install --upgrade coveralls
+        coveralls --service=github --finish
