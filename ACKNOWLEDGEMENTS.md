@@ -1,7 +1,7 @@
 Funding
 =======
 The following institutions, missions, and programs have provided funding
-for pysat development.
+for pysatCDAAC development.
 
 Institutions
 ------------
@@ -28,7 +28,7 @@ Programs
 Disclaimers
 ===========
 Any opinions or actions taken by the listed funding institutions are those of
-the institutions and do not necessarily reflect the views of the pysat
+the institutions and do not necessarily reflect the views of the pysatCDAAC
 development team or individual authors. Any opinions, findings, and conclusions
 or recommendations expressed in this material are those of the author(s) and do
 not necessarily reflect the views of the funding agencies.
