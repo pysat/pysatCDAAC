@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# Full author list can be found in .zenodo.json file
+# DOI:10.5281/zenodo.3475493
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
+# ----------------------------------------------------------------------------
 """Unit and Integration Tests for each instrument module.
 
 Note
