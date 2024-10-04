@@ -16,12 +16,17 @@ jobs:
         numpy_ver: ["latest"]
         test_config: ["latest"]
         include:
+          # SPEC-0 compliance settings
           - python-version: "3.10"
             numpy_ver: "1.24"
+            pandas_ver: "1.5.0"
+            scipy_ver: "1.10.0"
+            xarray_ver: "2022.9.0"
             os: ubuntu-latest
-            test_config: "NEP29"
-          - python-version: "3.6.8"
-            numpy_ver: "1.19.5"
+            test_config: "SPEC0"
+          # Operational compliance settings
+          - python-version: "3.9"
+            numpy_ver: "1.23.5"
             os: "ubuntu-20.04"
             test_config: "Ops"
 
@@ -37,15 +42,16 @@ jobs:
     - name: Install Operational dependencies
       if: ${{ matrix.test_config == 'Ops'}}
       run: |
-        pip install --no-cache-dir numpy==${{ matrix.numpy_ver }}
-        pip install -r requirements.txt
-        pip install -r test_requirements.txt
-        pip install .
+        pip install numpy==${{ matrix.numpy_ver }}
+        pip install --upgrade-strategy only-if-needed .[test]
 
-    - name: Install NEP29 dependencies
-      if: ${{ matrix.test_config == 'NEP29'}}
+    - name: Install SPEC-0 dependencies
+      if: ${{ matrix.test_config == 'SPEC0'}}
       run: |
         pip install numpy==${{ matrix.numpy_ver }}
+        pip install pandas==${{ matrix.pandas_ver }}
+        pip install scipy==${{ matrix.scipy_ver }}
+        pip install xarray==${{ matrix.xarray_ver }}
         pip install --upgrade-strategy only-if-needed .[test]
 
     - name: Install standard dependencies
