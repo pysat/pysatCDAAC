@@ -2,11 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.0.5] - 202X-XX-XX
+## [0.0.5] - 2024-11-30
 * Maintenance
   * Update GitHub Actions standards
   * Add compatibility for numpy version>=3.2.0
   * Update usage of 'Dataset.dims' to 'Dataset.sizes'
+  * Update compatibility with pysat 3.2.0
+  * Update operational environment
 
 ## [0.0.4] - 2023-08-11
 * Bug fixes
