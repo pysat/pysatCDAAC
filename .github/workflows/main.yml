@@ -16,12 +16,13 @@ jobs:
         numpy_ver: ["latest"]
         test_config: ["latest"]
         include:
-          # SPEC-0 compliance settings
+          # SPEC-0 compliance settings w/ minimum supported pysat
           - python-version: "3.10"
             numpy_ver: "1.24"
             pandas_ver: "1.5.0"
             scipy_ver: "1.10.0"
             xarray_ver: "2022.9.0"
+            pysat_ver: "3.0.4"
             os: ubuntu-latest
             test_config: "SPEC0"
           # Operational compliance settings
@@ -52,6 +53,7 @@ jobs:
         pip install pandas==${{ matrix.pandas_ver }}
         pip install scipy==${{ matrix.scipy_ver }}
         pip install xarray==${{ matrix.xarray_ver }}
+        pip install pysat==${{ matrix.pysat_ver }}
         pip install --upgrade-strategy only-if-needed .[test]
 
     - name: Install standard dependencies
