@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   * Update usage of 'Dataset.dims' to 'Dataset.sizes'
   * Update compatibility with pysat 3.2.0
   * Set minimum pysat version to 3.1.0
+  * Set minimum python version to 3.9
   * Update operational environment
 
 ## [0.0.4] - 2023-08-11

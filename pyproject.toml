@@ -7,7 +7,7 @@ name = "pysatCDAAC"
 version = "0.0.4"
 description = "pysat support for CDAAC Instruments"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Jeff Klenzing, et al.", email = "pysat.developers@gmail.com"},
