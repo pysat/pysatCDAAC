@@ -71,7 +71,7 @@ Source = "https://github.com/pysat/pysatCDAAC"
 [tool.coverage.report]
 
 [tool.pytest.ini_options]
-addopts = "--cov=pysatCDAAC"
+addopts = "--cov=pysatCDAAC --cov-report xml"
 markers = [
   "all_inst",
   "download",
