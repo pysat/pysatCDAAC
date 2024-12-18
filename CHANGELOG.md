@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   * Set minimum pysat version to 3.1.0
   * Set minimum python version to 3.9
   * Update operational environment
+  * Update controlled information statement for accuracy and clarity
 
 ## [0.0.4] - 2023-08-11
 * Bug fixes
