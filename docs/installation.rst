@@ -55,11 +55,6 @@ Installation Options
 
         pip install --user -e .
 
-.. extras-require:: test
-    :pyproject:
-
-.. extras-require:: doc
-    :pyproject:
 
 .. _post-install:
 
