@@ -6,7 +6,7 @@
         "orcid": "0000-0001-8321-6074"
       },
       {
-        "affiliation": "Stoneris LLC",
+        "affiliation": "Cosmic Studios",
         "name": "Stoneback, Russell",
         "orcid": "0000-0001-7216-4336"
       },
@@ -16,8 +16,9 @@
         "orcid": "0000-0001-8875-9326"
       },
       {
-        "affiliation": "Predictive Science",
-        "name": "Pembroke, Asher"
+        "affiliation": "Universities Space Research Association, Goddard Space Flight Center",
+        "name": "Govada, Aadarsh",
+        "orcid": "0009-0004-7873-5899"
       },
       {
         "affiliation": "Catholic University of America, Goddard Space Flight Center",
@@ -25,13 +26,13 @@
         "orcid": "0000-0002-8191-4765"
       },
       {
-        "name": "Spence, Carey",
-        "orcid": "0000-0001-8340-5625"
+        "affiliation": "Predictive Science",
+        "name": "Pembroke, Asher"
       },
       {
-        "affiliation": "Universities Space Research Association, Goddard Space Flight Center",
-        "name": "Govada, Aadarsh",
-        "orcid": "0009-0004-7873-5899"
+        "affiliation": "The University of Texas at Dallas",
+        "name": "Spence, Carey",
+        "orcid": "0000-0001-8340-5625"
       }
     ]
 }
