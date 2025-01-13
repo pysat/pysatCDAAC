@@ -26,7 +26,6 @@ Python 3.9+ and pysat 3.2.1+.
   xarray
  ================== ====================
 
-
 Installation Options
 --------------------
 
@@ -56,11 +55,14 @@ Installation Options
 
         pip install --user -e .
 
-.. extras-require:: test
-    :pyproject:
 
-.. extras-require:: doc
-    :pyproject:
+..
+    .. extras-require:: test
+        :pyproject:
+
+..
+    .. extras-require:: doc
+        :pyproject:
 
 .. _post-install:
 
