@@ -118,7 +118,7 @@ coord_translation = {
 
 _test_dates = {'': {tag: dt.datetime(2014, 5, 1) for tag in inst_ids['']}}
 
-# TODO(#51): Remove when compliant with multi-day load tests
+# TODO(#66): Remove when compliant with multi-day load tests
 _new_tests = {'': {tag: False for tag in inst_ids['']}}
 
 # ----------------------------------------------------------------------------
@@ -277,9 +277,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     stored = futils.parse_fixed_width_filenames(files, format_str)
 
     # Process info
-    # Check on length for backward compat with pysat 3.1.0
-    # TODO(#51): Can be removed after 3.2.0 release and minimum version is set.
-    if stored['year'] is not None and len(stored['year']) > 0:
+    if stored['year'] is not None:
         year = np.array(stored['year'])
         day = np.array(stored['day'])
         hour = np.array(stored['hour'])
