@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# Full author list can be found in .zenodo.json file
+# DOI:10.5281/zenodo.3475493
+#
+# Review Status for Classified or Controlled Information by NRL
+# -------------------------------------------------------------
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
+# ----------------------------------------------------------------------------
 """Loads data from the COSMIC satellite.
 
 The Constellation Observing System for Meteorology, Ionosphere, and Climate
@@ -108,7 +116,10 @@ coord_translation = {
 # ----------------------------------------------------------------------------
 # Instrument test attributes
 
-_test_dates = {'': {}.fromkeys(list(tags.keys()), dt.datetime(2014, 5, 1))}
+_test_dates = {'': {tag: dt.datetime(2014, 5, 1) for tag in inst_ids['']}}
+
+# TODO(#66): Remove when compliant with multi-day load tests
+_new_tests = {'': {tag: False for tag in inst_ids['']}}
 
 # ----------------------------------------------------------------------------
 # Instrument methods
@@ -266,7 +277,7 @@ def list_files(tag=None, inst_id=None, data_path=None, format_str=None):
     stored = futils.parse_fixed_width_filenames(files, format_str)
 
     # Process info
-    if len(stored['year']) > 0:
+    if stored['year'] is not None:
         year = np.array(stored['year'])
         day = np.array(stored['day'])
         hour = np.array(stored['hour'])

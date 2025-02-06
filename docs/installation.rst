@@ -14,18 +14,17 @@ Prerequisites
 
 pysatCDAAC uses common Python modules, as well as modules developed by
 and for the Space Physics community.  This module officially supports
-Python 3.6+ and pysat 3.0.4+.
+Python 3.9+ and pysat 3.2.1+.
 
- ================== =================
+ ================== ====================
  Common modules     Community modules
- ================== =================
-  netCDF4            pysat>=3.0.4
+ ================== ====================
+  netCDF4            pysat>=3.2.1
   numpy
   pandas
   requests
   xarray
- ================== =================
-
+ ================== ====================
 
 Installation Options
 --------------------
@@ -56,11 +55,14 @@ Installation Options
 
         pip install --user -e .
 
-.. extras-require:: test
-    :pyproject:
 
-.. extras-require:: doc
-    :pyproject:
+..
+    .. extras-require:: test
+        :pyproject:
+
+..
+    .. extras-require:: doc
+        :pyproject:
 
 .. _post-install:
 

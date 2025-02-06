@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pysatCDAAC"
-version = "0.0.4"
+version = "0.0.5"
 description = "pysat support for CDAAC Instruments"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Jeff Klenzing, et al.", email = "pysat.developers@gmail.com"},
@@ -21,10 +21,10 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Natural Language :: English",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.6",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows"
@@ -39,7 +39,7 @@ dependencies = [
   "netCDF4",
   "numpy",
   "pandas",
-  "pysat >= 3.0.4",
+  "pysat >= 3.2.1",
   "requests",
   "xarray"
 ]
@@ -61,7 +61,7 @@ doc = [
   "numpydoc",
   "sphinx < 7.0",
   "sphinx-autoapi",
-  "sphinx_rtd_theme >= 1.2.2"
+  "sphinx_rtd_theme >= 1.2.2, <2.0.0"
 ]
 
 [project.urls]
@@ -71,12 +71,13 @@ Source = "https://github.com/pysat/pysatCDAAC"
 [tool.coverage.report]
 
 [tool.pytest.ini_options]
-addopts = "--cov=pysatCDAAC"
+addopts = "--cov=pysatCDAAC --cov-report xml"
 markers = [
   "all_inst",
   "download",
   "no_download",
   "load_options",
+  "new_tests",
   "first",
   "second"
 ]

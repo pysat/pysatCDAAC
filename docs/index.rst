@@ -18,6 +18,13 @@ Center (CDAAC) as pysat.Instrument objects.
    examples.rst
    develop_guide.rst
    history.rst
+   acknowledgements.rst
+
+
+.. admonition:: Review Status for Classified or Controlled Information by NRL
+
+   DISTRIBUTION STATEMENT A: Approved for public release.
+   Distribution is unlimited.
 
 
 Indices and tables

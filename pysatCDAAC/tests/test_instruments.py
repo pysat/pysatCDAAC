@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+# Full author list can be found in .zenodo.json file
+# DOI:10.5281/zenodo.3475493
+#
+# Review Status for Classified or Controlled Information by NRL
+# -------------------------------------------------------------
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
+# ----------------------------------------------------------------------------
 """Unit and Integration Tests for each instrument module.
 
 Note
@@ -67,9 +76,9 @@ class TestInstruments(clslib.InstLibTests):
         rem = np.remainder(self.test_inst['MSL_bin_alt'].values, 5)
         idx, idy, = np.where(rem == 0)
         idx2, idy2, = np.where(np.isnan(rem))
-        assert len(idx) + len(idx2) == np.product(rem.shape)
+        assert len(idx) + len(idx2) == np.prod(rem.shape)
 
         # Confirm length of each profile corresponds to bin_num
-        assert self.test_inst.data.dims['RO'] == bin_num
+        assert self.test_inst.data.sizes['RO'] == bin_num
 
         return
