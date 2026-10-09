@@ -1,2 +1,2 @@
 .. include:: ../ACKNOWLEDGEMENTS.md
-   :parser:
+   :parser: myst_parser.sphinx
