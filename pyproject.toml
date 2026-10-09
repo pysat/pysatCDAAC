@@ -57,7 +57,7 @@ test = [
 doc = [
   "extras_require",
   "ipython",
-  "m2r2",
+  "myst_parser",
   "numpydoc",
   "sphinx < 7.0",
   "sphinx-autoapi",

@@ -1,1 +1,2 @@
-.. mdinclude:: ../ACKNOWLEDGEMENTS.md
+.. include:: ../ACKNOWLEDGEMENTS.md
+   :parser:
