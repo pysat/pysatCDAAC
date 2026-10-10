@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   * Add compatibility for numpy version>=3.2.0
   * Update usage of 'Dataset.dims' to 'Dataset.sizes'
   * Update compatibility with pysat 3.2.0
+  * Add an explicit tarfile extraction filter where supported
   * Set minimum pysat version to 3.1.0
   * Set minimum python version to 3.9
   * Update operational environment

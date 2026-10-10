@@ -97,15 +97,19 @@ def download(date_array, tag, inst_id, supported_tags=None,
             local_file.write(req.content)
             local_file.close()
         try:
-            # Uncompress files and remove tarball
-            tar = tarfile.open(fname)
-            if sub_path:
-                # Send to subdirectory.
-                tar.extractall(path=os.path.join(data_path, yrdoystr))
-            else:
-                # Send to top level.
-                tar.extractall(path=data_path)
-            tar.close()
+            # Uncompress files and remove tarball.
+            extract_kwargs = {}
+            if hasattr(tarfile, 'data_filter'):
+                extract_kwargs['filter'] = 'data'
+
+            with tarfile.open(fname) as tar:
+                if sub_path:
+                    # Send to subdirectory.
+                    tar.extractall(path=os.path.join(data_path, yrdoystr),
+                                   **extract_kwargs)
+                else:
+                    # Send to top level.
+                    tar.extractall(path=data_path, **extract_kwargs)
 
         except tarfile.ReadError:
             # If file cannot be read as a tarfile, then data does not exist.
